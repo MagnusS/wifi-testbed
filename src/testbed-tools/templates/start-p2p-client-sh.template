@@ -1,0 +1,29 @@
+#!/bin/bash
+
+echo "Starting client $identifier"
+
+echo "Launching P2PDPRD..."
+
+$p2p_bin p2pdprd-client$identifier.cfg &
+P2PPID=$!
+
+echo "P2PDPRD launched with PID $P2PPID"
+
+sleep 1
+
+echo "Launching RADAC..."
+
+$radac_bin \
+    --listen=$radac_listen_port \
+    --control_port=$radac_control_port \
+    --lat=$lat \
+    --lon=$lon \
+    --cr=$cr \
+    --interface=$radac_ip \
+    --p2p=$p2p_sock \
+    --has_radio=1 \
+    --radio_device_num=0
+
+echo "Killing P2PDPRD and waiting..."
+kill $P2PPID
+wait $P2PPID

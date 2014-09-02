@@ -1,0 +1,29 @@
+interface=wlan0
+bridge=br0
+driver=nl80211
+ctrl_interface=/var/run/hostapd
+
+#ht_capab=[HT20+]
+
+# replace the correct SSID. 
+ssid=${node}-wifi
+
+country_code=NO
+ieee80211d=1
+hw_mode=g
+channel=${channel}
+ignore_broadcast_ssid=0
+ieee8021x=0
+eap_server=0
+
+wpa=2
+
+# replace with real password (8+ letters)
+wpa_passphrase=${wifipassword}
+macaddr_acl=0
+auth_algs=1
+wpa_key_mgmt=WPA-PSK
+wpa_pairwise=TKIP
+rsn_pairwise=CCMP
+
+# see /usr/share/doc/hostapd/examples/hostapd.conf.gz for extensive documentation w/examples

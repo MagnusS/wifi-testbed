@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# this file goes in /etc/network/if-pre.up/iptables
+
+# enable IP forwarding
+echo 1 > /proc/sys/net/ipv4/ip_forward
+
+# load saved iptables rules
+/sbin/iptables-restore < /etc/iptables.up.rules

@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# Cron script for setting time from coordinator ntp daemon
+
+/usr/sbin/ntpdate 10.10.1.254

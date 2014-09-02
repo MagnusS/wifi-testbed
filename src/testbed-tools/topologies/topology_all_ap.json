@@ -1,0 +1,149 @@
+{
+    "1": {
+        "ap": true, 
+        "channel": 1,
+        "txpower": 20,
+        "clients": [], 
+        "enabled": true
+    }, 
+    "2": {
+        "ap": true, 
+        "channel": 1,
+        "txpower": 20,
+        "clients": [], 
+        "enabled": true
+    }, 
+    "3": {
+        "ap": true, 
+        "channel": 1,
+        "txpower": 20,
+        "clients": [], 
+        "enabled": true
+    }, 
+    "4": {
+        "ap": true, 
+        "channel": 1,
+        "txpower": 20,
+        "clients": [], 
+        "enabled": true
+    }, 
+    "5": {
+        "ap": true, 
+        "channel": 1,
+        "txpower": 20,
+        "clients": [], 
+        "enabled": true
+    }, 
+    "6": {
+        "ap": true, 
+        "channel": 1,
+        "txpower": 20,
+        "clients": [], 
+        "enabled": true
+    }, 
+    "7": {
+        "ap": true, 
+        "channel": 1,
+        "txpower": 20,
+        "clients": [], 
+        "enabled": true
+    }, 
+    "8": {
+        "ap": true, 
+        "channel": 1,
+        "txpower": 20,
+        "clients": [], 
+        "enabled": true
+    }, 
+    "9": {
+        "ap": true, 
+        "channel": 1,
+        "txpower": 20,
+        "clients": [], 
+        "enabled": true
+    }, 
+    "10": {
+        "ap": true, 
+        "channel": 1,
+        "txpower": 20,
+        "clients": [], 
+        "enabled": true
+    }, 
+    "11": {
+        "ap": true, 
+        "channel": 1,
+        "txpower": 20,
+        "clients": [], 
+        "enabled": true
+    }, 
+    "12": {
+        "ap": true, 
+        "channel": 1,
+        "txpower": 20,
+        "clients": [], 
+        "enabled": true
+    }, 
+    "13": {
+        "ap": true, 
+        "channel": 1,
+        "txpower": 20,
+        "clients": [], 
+        "enabled": true
+    }, 
+    "14": {
+        "ap": true, 
+        "channel": 1,
+        "txpower": 20,
+        "clients": [], 
+        "enabled": true
+    }, 
+    "15": {
+        "ap": true, 
+        "channel": 1,
+        "txpower": 20,
+        "clients": [], 
+        "enabled": true
+    }, 
+    "16": {
+        "ap": true, 
+        "channel": 1,
+        "txpower": 20,
+        "clients": [], 
+        "enabled": true
+    }, 
+    "17": {
+        "ap": true, 
+        "channel": 1,
+        "txpower": 20,
+        "clients": [], 
+        "enabled": true
+    }, 
+    "18": {
+        "ap": true, 
+        "channel": 1,
+        "txpower": 20,
+        "clients": [], 
+        "enabled": true
+    }, 
+    "19": {
+        "ap": true, 
+        "channel": 1,
+        "txpower": 20,
+        "clients": [], 
+        "enabled": true
+    }, 
+    "20": {
+        "ap": true, 
+        "channel": 1,
+        "txpower": 20,
+        "clients": [], 
+        "enabled": true
+    }, 
+    "21": {
+        "ap": true, 
+        "channel": 1,
+        "txpower": 20,
+        "clients": [], 
+        "enabled": true
+    }
+}

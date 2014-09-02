@@ -1,0 +1,148 @@
+{
+    "1": {
+        "ap": true, 
+        "channel": 1,
+        "txpower": 20,
+        "clients": [
+            2
+        ], 
+        "enabled": true
+    }, 
+    "2": {
+        "ap": false, 
+        "txpower": 20,
+        "enabled": true
+    }, 
+    "4": {
+        "ap": true, 
+        "channel": 6,
+        "txpower": 20,
+        "clients": [
+            3
+        ], 
+        "enabled": true
+    }, 
+    "3": {
+        "ap": false, 
+        "txpower": 20,
+        "enabled": true
+    }, 
+    "5": {
+        "ap": true, 
+        "channel": 11,
+        "txpower": 20,
+        "clients": [
+            13
+        ], 
+        "enabled": true
+    }, 
+    "7": {
+        "ap": true, 
+        "channel": 11,
+        "txpower": 20,
+        "clients": [
+            8
+        ], 
+        "enabled": true
+    }, 
+    "8": {
+        "ap": false, 
+        "txpower": 20,
+        "enabled": true
+    }, 
+    "10": {
+        "ap": true, 
+        "channel": 6,
+        "txpower": 20,
+        "clients": [
+            9
+        ], 
+        "enabled": true
+    }, 
+    "9": {
+        "ap": false, 
+        "txpower": 20,
+        "enabled": true
+    }, 
+    "11": {
+        "ap": true, 
+        "channel": 1,
+        "txpower": 20,
+        "clients": [
+            12
+        ], 
+        "enabled": true
+    }, 
+    "12": {
+        "ap": false, 
+        "txpower": 20,
+        "enabled": true
+    }, 
+    "13": {
+        "ap": false, 
+        "txpower": 20,
+        "enabled": true
+    }, 
+    "6": {
+        "ap": false, 
+        "txpower": 20,
+        "enabled": true
+    }, 
+    "14": {
+        "ap": true, 
+        "channel": 6,
+        "txpower": 20,
+        "clients": [
+            6
+        ], 
+        "enabled": true
+    }, 
+    "16": {
+        "ap": true, 
+        "channel": 1,
+        "txpower": 20,
+        "clients": [
+            15
+        ], 
+        "enabled": true
+    }, 
+    "15": {
+        "ap": false, 
+        "txpower": 20,
+        "enabled": true
+    }, 
+    "17": {
+        "ap": true, 
+        "channel": 11,
+        "txpower": 20,
+        "clients": [
+            20
+        ], 
+        "enabled": true
+    }, 
+    "18": {
+        "ap": false, 
+        "txpower": 20,
+        "enabled": true
+    }, 
+    "19": {
+        "ap": true, 
+        "channel": 6,
+        "txpower": 20,
+        "clients": [
+            18
+        ], 
+        "enabled": true
+    }, 
+    "20": {
+        "ap": false, 
+        "txpower": 20,
+        "enabled": true
+    }, 
+    "21": {
+        "ap": true, 
+        "channel": 6,
+        "txpower": 20,
+        "enabled": false
+    }
+}

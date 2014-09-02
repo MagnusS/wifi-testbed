@@ -1,0 +1,30 @@
+interface=br0
+dhcp-range=private,10.0.100.100,10.0.100.250,2h
+
+domain-needed
+bogus-priv
+
+# set coordinator as DNS server
+dhcp-option=6,10.10.1.254
+
+# Set the NTP time server address to be the same machine as
+# is running dnsmasq
+dhcp-option=42,0.0.0.0
+
+# Send microsoft-specific option to tell windows to release the DHCP lease
+# when it shuts down. 
+dhcp-option=vendor:MSFT,2,1i
+
+# Set the limit on DHCP leases, the default is 150
+## here, raised to the maximum number of hosts on networks
+dhcp-lease-max=506
+
+# Set the DHCP server to authoritative mode. In this mode it will barge in
+# and take over the lease for any client which broadcasts on the network,
+# whether it has a record of the lease or not. This avoids long timeouts
+# when a machine wakes up on a new network. DO NOT enable this if there's
+# the slighest chance that you might end up accidentally configuring a DHCP
+# server for your campus/company accidentally. The ISC server uses
+# the same option, and this URL provides more information:
+# http://www.isc.org/index.pl?/sw/dhcp/authoritative.php
+#dhcp-authoritative

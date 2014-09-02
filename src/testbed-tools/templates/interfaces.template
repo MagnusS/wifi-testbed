@@ -1,0 +1,24 @@
+# note that br0 is not included in auto
+auto lo eth0 wlan0 
+iface lo inet loopback
+
+iface eth0 inet dhcp
+    metric 1
+
+iface wlan0 inet manual
+    # set regulatory domain to NO/OSLO
+    pre-up iw reg set NO-03
+
+iface br0 inet static
+        bridge_fd 0
+        address 10.0.100.1
+        netmask 255.255.255.0
+        network 10.0.100.0
+        broadcast 10.0.100.255
+        # hostapd will add wlan0 to the bridge... don't list it here
+        bridge_ports eth1 eth2 eth3
+        bridge_hw 00:0f:b5:80:d3:25
+        hostapd /etc/hostapd/hostapd.conf
+        # set txpower and start dnsmasq on up
+        post-up iwconfig wlan0 txpower ${txpower} ; service dnsmasq start
+        post-down service dnsmasq stop

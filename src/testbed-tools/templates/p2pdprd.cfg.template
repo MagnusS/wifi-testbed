@@ -1,0 +1,85 @@
+###########################################################################
+# P2PDPRD Configuration file                                              #
+###########################################################################
+#	- Restart P2PDPRD client for changes to take effect
+#	- If no config file is present or the config file is empty/damaged, 
+#	  the default configuration in config.h is used.
+#	- PLEASE NOTE that the default configuration is largely invalid
+#	  for most uses, as the service needs sane network- and positional
+#	  data to properly do its job.
+#
+#	Starting P2P-DPRD with this configuration:
+#
+#		$ ./p2p-dprd /path/to/this/file.cfg
+#
+#	Make sure the file ends with a trailing newline!
+###########################################################################
+# Configuration parameters                                                #
+###########################################################################
+# Network-related parameters
+network_cfg:
+{
+	# The hosts own IP. Is shared with peers
+	host_ip = "$p2p_ip";
+	# The network listen port. Default port is 45454.
+	host_port = $p2p_port;
+	# The origin peer which is first contacted upon start of service
+	origin_peer_ip = "$origin_ip";
+	# The origin peer listening port
+	origin_peer_port = $origin_port;
+};
+# P2PDPRD-related parameters
+proto_cfg:
+{
+	# The client timeout base value. Given in seconds.	
+	# On timeout, program triggers exchange with a randomly selected node
+	client_timeout = 10;
+
+	# The above timeout is varied by this value to avoid peer phase-locking scenarios
+	# Given in microseconds ([s]EXP-6)
+	client_timeout_variation = 2000000;
+
+    # Identifier in the P2P network. If not set here a random id is generated
+    client_id = $identifier;
+	
+	# Position of host (given in [latitude , longitude])
+	# Set from config on start-up of service. 
+	# Can be updated via local socket call at runtime
+	lat = $lat;
+	lon = $lon;
+	
+	# Statically defined host coordination range
+	coord_range = $cr;
+	
+	# Node-item age limit (given in seconds)
+	node_max_age = 10800;
+
+	# Protocol-defined table-size constants - unsigned integers
+	# Default: N = 10, M = 30, K = 15 
+	proto_N = 10;
+	proto_M = 100;
+	proto_K = 20;
+};
+# RADAC cfg
+radac_cfg:
+{
+	radac_ip = "$radac_ip"
+	radac_port = $radac_listen_port;
+};
+# Local services config
+local_service_cfg:
+{
+	# Local listening socket path
+	# A local listening datagram socket is bound to the defined path
+	# Other system processes can subscribe to the candidate nodes
+	# service via this socket, as well as update position and 
+	# coordination range of the node.
+	local_sock_path = "$p2p_sock";
+};
+# Debug/development parameters
+deb_cfg:
+{
+	# Location of log file. File will be created if it does not exist.
+	# Make sure program has permissions to create/read file
+	logfile_path = "$log_file";
+};

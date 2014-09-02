@@ -1,0 +1,10 @@
+aggie
+clients.txt
+debug/
+example-server.js
+json/
+jsoncpp.cpp
+jsoncpp/dist/
+node_modules/
+release/
+doxygen/
