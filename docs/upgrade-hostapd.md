@@ -1,5 +1,8 @@
+# Upgrading from hostapd 1 to 2 in Debian 7 #
 
-wnload the source code from [here](http://hostap.epitest.fi/hostapd/) as a tar.gz:
+For full passive scanning support in Debian 7, hostapd must be upgraded.
+
+Download the source code from [here](http://hostap.epitest.fi/hostapd/) as a tar.gz:
 
 ```
 mkdir ~/hostapd ; cd ~/hostapd
@@ -43,5 +46,4 @@ hostapd /etc/hostapd/hostapd.conf
 ```
 
 If you are able to connect to the wifi-network and everything seems to work as it should, reboot the device to enable the new hostapd-daemon. 
-
 
