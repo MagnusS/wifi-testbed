@@ -11,7 +11,7 @@ Contributors:
 
 * Magnus Skjegstad (various)
 * Terje Mikal Mjelde (aggie)
-* Halvdan Hoem Helland (docs, openwrt-code)
+* Halvdan Hoem Grelland (docs, openwrt-code)
 
 The code is (c) Magnus Skjegstad, FFI and contributors 2013-2014. See [license](LICENSE).
 
