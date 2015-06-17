@@ -619,38 +619,38 @@ def dump_topology(nodeids):
 #######################Endringer###################################
 ###################################################################
 def get_topology():
-import os
-# aapner tmp-fila for aa hente ut klientene til hvert av APene
+    import os
+    # aapner tmp-fila for aa hente ut klientene til hvert av APene
 
-with open("wifi_measurement/tmp_topology.txt", "r") as input_file, \
+    with open("wifi_measurement/tmp_topology.txt", "r") as input_file, \
         open("wifi_measurement/aps_with_clients.txt", 'w') as output_file:
 
-  k = -1
+        k = -1
 
-  lines_in_file = input_file.readlines()  # lagrer alle linjer i et array
-  p = len(lines_in_file)
+        lines_in_file = input_file.readlines()  # lagrer alle linjer i et array
+        p = len(lines_in_file)
 
-  for i in range(0, p):
-    k = k + 1
+        for i in range(0, p):
+            k = k + 1
 
-    if '"' in lines_in_file[i].strip()[0]:      # Kvalifiseet soek
-      if lines_in_file[i+2].strip() == ('"ap": true,'):
-        tt = lines_in_file[i].strip()[1:3]          # PLukker ut 5. og 6. tegn
-        if '"' in tt[1]:          # f.eks "1"
-          output_file.write(tt[0]+":")
+            if '"' in lines_in_file[i].strip()[0]:      # Kvalifiseet soek
+                if lines_in_file[i+2].strip() == ('"ap": true,'):
+                    tt = lines_in_file[i].strip()[1:3]          # PLukker ut 5. og 6. tegn
+                    if '"' in tt[1]:          # f.eks "1"
+                        output_file.write(tt[0]+":")
 
-        else:                 # f.eks "10"
-          output_file.write(tt+":") 
+                    else:                 # f.eks "10"
+                        output_file.write(tt+":") 
           
 
 
-        for n in range(k, (k+10)):
+                    for n in range(k, (k+10)):
 
-          if lines_in_file[n].strip()[0].isdigit():    # henter ut siste klient som har ett siffer
-            output_file.write(lines_in_file[n].strip() + '\n')
+                        if lines_in_file[n].strip()[0].isdigit():    # henter ut siste klient som har ett siffer
+                            output_file.write(lines_in_file[n].strip() + '\n')
 
-output_file.close()
-input_file.close()
+    output_file.close()
+    input_file.close()
 
 parser = argparse.ArgumentParser(description='Utility used to control and configure wifi testbed nodes.')
 
@@ -716,7 +716,7 @@ with open("nodes.json", "r") as f:
     nodeinfo = json.load(fp=f)
 
 nodes = []
-try to extract nodes, but may fail for some param combinations
+#try to extract nodes, but may fail for some param combinations
 if args.node != None:
   for f in args.node:
     try:  # if ap:client1,client2... format do this:
