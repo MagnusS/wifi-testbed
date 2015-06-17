@@ -716,19 +716,19 @@ with open("nodes.json", "r") as f:
     nodeinfo = json.load(fp=f)
 
 nodes = []
-# try to extract nodes, but may fail for some param combinations
-#if args.node != None:
-#  for f in args.node:
-#    try:  # if ap:client1,client2... format do this:
-#      (ap_host, clients) = f.split(":")
-#    except:  # on error we assume that only ap is specified
-#      ap_host = f
-#      clients = None
-#      pass
-#    nodes.append(nodeinfo[ap_host]['hostname'])
-#    if clients:
-#      for clientid in clients.split(","):
-#        nodes.append(nodeinfo[clientid]['hostname'])
+try to extract nodes, but may fail for some param combinations
+if args.node != None:
+  for f in args.node:
+    try:  # if ap:client1,client2... format do this:
+      (ap_host, clients) = f.split(":")
+    except:  # on error we assume that only ap is specified
+      ap_host = f
+      clients = None
+      pass
+    nodes.append(nodeinfo[ap_host]['hostname'])
+    if clients:
+      for clientid in clients.split(","):
+        nodes.append(nodeinfo[clientid]['hostname'])
 
 ###################################################################
 #######################Endringer###################################
