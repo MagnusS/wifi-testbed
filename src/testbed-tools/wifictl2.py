@@ -648,8 +648,8 @@ def get_topology():
         for i in range(0, p):
             k = k + 1
 
-            if '"' in lines_in_file[i].strip()[0]:      # Kvalifiseet soek
-                if lines_in_file[i+2].strip() == ('"ap": true,') and lines_in_file[i+6].strip() == ('"enabled": true,'): #FIX THIS!!!
+            if '"' in lines_in_file[i].strip()[0]:                # Kvalifiseet soek
+                if lines_in_file[i+2].strip() == ('"ap": true,') and lines_in_file[i+4].strip() != '"enabled": false,': #FIX THIS!!!
                     tt = lines_in_file[i].strip()[1:3]          # PLukker ut 5. og 6. tegn
                     if '"' in tt[1]:          # f.eks "1"
                         output_file.write(tt[0]+":")
@@ -659,7 +659,7 @@ def get_topology():
           
 
 
-                    for n in range(k, (k+10)):
+                    for n in range(k, min((k+10), p)):
 
                         if lines_in_file[n].strip()[0].isdigit():    # henter ut siste klient som har ett siffer
                             output_file.write(lines_in_file[n].strip())
@@ -668,6 +668,9 @@ def get_topology():
 
     output_file.close()
     input_file.close()
+
+
+#def enabled_node():
 
 
 def sort_results():
