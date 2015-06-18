@@ -652,6 +652,85 @@ def get_topology():
     output_file.close()
     input_file.close()
 
+
+def sort_results():
+  import os
+  aps_w_c = open("wifi_measurement/aps_with_clients.txt")
+  lines_in_file = aps_w_c.readlines()
+  aps_w_c.close()
+
+  os.system("> wifi_measurement/Results.txt")
+
+  for v in range(0, len(lines_in_file)):
+  
+    ac = lines_in_file[v].split(":")
+    ap = ac[0]              # AP of current line
+
+    fil = open("wifi_measurement/Results.txt", "a")        # Writes current AP to file as header
+    fil.write("node%s-wifi:\n" % (str(ap)))
+    fil.close()
+
+    ac[1] = ac[1].replace('\n', '')
+    clients = ac[1].split(",")      # All clients of current line
+    for cls in range(0, len(clients)):
+      write_results(clients[cls])     # Gets results from clients that are not last
+          
+    fil = open("wifi_measurement/Results.txt", "a")
+    fil.write("\n\n")
+    fil.close()
+
+  os.system("cat wifi_measurement/Results.txt")      # Displays file in terminal
+
+
+def write_results(m):
+  import os 
+
+  if os.path.isfile("wifi_measurement/mgen_log/plot_node%s.gp" % (m)):
+    p = open("wifi_measurement/mgen_log/plot_node%s.gp" % (m))
+    plines = p.readlines()
+    p.close()
+
+    if len(plines) > 15:
+      with open("wifi_measurement/mgen_log/plot_node%s.gp" % m) as b:
+        
+        counter = 0
+        bitrate = 0
+        lines = b.readlines()
+        nbitrates = 0
+
+        for i in range(11,len(lines)):
+          line = lines[i]
+          
+          for k in range(5, 25):          # Gathers bitrates between packets sent after 5 seconds till 25 seconds
+            if line.startswith('%s' % k):
+              f = line.split(', ')
+              value = f[1].split('e') # tallverdien ligger i value[0]   
+              value[1] = value[1].replace('+0', '')
+              value[1] = value[1].replace('\n', '')
+
+              tv = float(value[0])
+              eksp = float(value[1])
+              
+              bitrate = tv*(10**eksp)
+
+              counter += float(bitrate)
+              nbitrates += 1
+
+        avg = counter/nbitrates    # Calculates average bitrate
+        avglim = round(avg)
+    
+
+        h = open("wifi_measurement/Results.txt", "a")
+        if int(m) > 9:
+          h.write("Node" + str(m) + ": " + str(avglim) + " kbit/s\n")     # Writes results to file
+        if int(m) <= 9:
+          h.write("Node" + str(m) + ":  " + str(avglim) + " kbit/s\n")     # Writes results to file
+        h.close()
+
+###################################################################
+#######################Endringer Slutt#############################
+###################################################################
+
 parser = argparse.ArgumentParser(description='Utility used to control and configure wifi testbed nodes.')
 
 subparsers = parser.add_subparsers(dest="subparser", help='sub-command help')
