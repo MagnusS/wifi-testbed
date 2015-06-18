@@ -670,9 +670,6 @@ def get_topology():
     input_file.close()
 
 
-#def enabled_node():
-
-
 def sort_results():
   import os
   aps_w_c = open("wifi_measurement/aps_with_clients.txt")
