@@ -618,6 +618,21 @@ def dump_topology(nodeids):
 ###################################################################
 #######################Endringer###################################
 ###################################################################
+
+''' Dump current loaded topology to a temporary file'''
+
+def get_associated_clients():
+  import os
+
+  debug("Dumping current topolgy to wifi_measurent/tmp_topology.txt....  taking aprox. 1.5 minutes")
+  os.system("> wifi_measurement/tmp_topology.txt")
+  os.system("python3 wifictl.py topology --dump 1 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 >> wifi_measurement/tmp_topology.txt") #ONLY NODES DEFINED IN CURRENT TOPOLOGY IS LISTED
+  debug("Finished dumping")
+
+
+
+''' Cleaning up temporary topology file '''
+
 def get_topology():
     import os
     # aapner tmp-fila for aa hente ut klientene til hvert av APene
@@ -634,7 +649,7 @@ def get_topology():
             k = k + 1
 
             if '"' in lines_in_file[i].strip()[0]:      # Kvalifiseet soek
-                if lines_in_file[i+2].strip() == ('"ap": true,'):
+                if lines_in_file[i+2].strip() == ('"ap": true,'): #FIX THIS!!!
                     tt = lines_in_file[i].strip()[1:3]          # PLukker ut 5. og 6. tegn
                     if '"' in tt[1]:          # f.eks "1"
                         output_file.write(tt[0]+":")
@@ -647,7 +662,9 @@ def get_topology():
                     for n in range(k, (k+10)):
 
                         if lines_in_file[n].strip()[0].isdigit():    # henter ut siste klient som har ett siffer
-                            output_file.write(lines_in_file[n].strip() + '\n')
+                            output_file.write(lines_in_file[n].strip())
+                            if ',' not in lines_in_file[n].strip():
+                                output_file.write('\n')
 
     output_file.close()
     input_file.close()
@@ -727,9 +744,204 @@ def write_results(m):
           h.write("Node" + str(m) + ":  " + str(avglim) + " kbit/s\n")     # Writes results to file
         h.close()
 
+def upload_mgen(host):
+  
+    """ Function for uploading script-file to nodes """
+
+    import io
+
+    with open("wifi_measurement/mgen_scripts.mgn") as tmp:
+        full_mgen = tmp.read()
+        mgen = full_mgen.split("\n")
+        e = (len(mgen))
+        i = int(e)
+        mgen_to_ap = ('')
+
+        for x in range(0, i - 1):
+            ap = (("node%s" % mgen[x].split(":", 1)[0]))
+            script = mgen[x].split(":", 1)[1]
+
+            if (ap == host):
+                        
+                if (script.split(' ', 1)[1].startswith('ON')):
+                    on = script
+                    cl = (on.split('DST ', 1)[1].split('/', 1)[0])
+                    ip = get_client_wifi_ip(cl)
+                    on = script.replace(cl, ip)
+                    mgen_to_ap += ('%s\n' % on)
+          
+                if (script.split(' ', 1)[1].startswith('OFF')):
+                    off = script
+                    mgen_to_ap += ('%s\n' % off)
+          
+            if (x == (i - 2)) and (is_ap(host)):
+                debug(
+                "Uploading mgen-scripts to correct AP according to current topology...")
+                upload_file_from_string(host, "tmp_mgen_script_%s.mgn" % host, mgen_to_ap)
+                debug("Moving to correct location using sudo...")
+                run_command(
+                host, "sudo mv tmp_mgen_script_%s.mgn wifi_measurement/mgen_script/mgen_script_%s.mgn" % (host, host))
+
+
+
+
+''' Make mgen scripts from loaded topology on testbed '''
+
+def make_mgen_udp(host):
+  import io
+  import os
+  from contextlib import closing
+  debug("Making mgen scripts according to current topology...")
+  get_topology() 
+
+  with open("wifi_measurement/aps_with_clients.txt") as tmp:
+    data = tmp.read()
+    lines = data.split("\n")
+    count = sum(1 for line in lines)
+    tot_lines = count - 1
+
+    for x in range(0, tot_lines):
+      ap = lines[x].split(":", 1)[0]
+      clients = (lines[x].split(":", 1)[1].split(","))
+      count1 = sum(1 for line in clients)
+
+      for z in range(0, count1):
+        flow = (z + 1)
+        
+        with open("wifi_measurement/mgen_scripts.mgn", "a") as mgn:
+          mgn.write(
+          "{0}:0.0 ON {1} UDP SRC 500{1} DST node{2}/5001 PERIODIC [1000 4096]\n{0}:30.0 OFF {1}\n".format(ap, flow, clients[z]))
+
+
+''' Make mgen scripts from loaded topology on testbed '''
+
+def make_mgen_tcp(host):
+  import io
+  import os
+  from contextlib import closing
+  debug("Making tcp mgen scripts according to current topology...")
+  get_topology() 
+
+  with open("wifi_measurement/aps_with_clients.txt") as tmp:
+    data = tmp.read()
+    lines = data.split("\n")
+    count = sum(1 for line in lines)
+    tot_lines = count - 1
+
+    for x in range(0, tot_lines):
+      ap = lines[x].split(":", 1)[0]
+      clients = (lines[x].split(":", 1)[1].split(","))
+      count1 = sum(1 for line in clients)
+
+      for z in range(0, count1):
+        flow = (z + 1)
+        
+        with open("wifi_measurement/mgen_scripts.mgn", "a") as mgn:
+          mgn.write(
+          "{0}:0.0 ON {1} TCP SRC 500{1} DST node{2}/5000 PERIODIC [8 1048576]\n{0}:30.0 OFF {1}\n".format(ap, flow, clients[z]))
+
+
+
+''' Start mgen flows on AP's '''
+
+def start_mgen(host):
+  import io
+
+  debug("Running mgen scripts from AP, according to current topology...")
+
+  if is_ap(host):
+    kill_mgen()
+    run_command(host, "nohup sudo mgen input wifi_measurement/mgen_script/mgen_script_%s.mgn >/dev/null 2>&1 &" % host)
+
+
+
+
+''' Copy mgen log file to coordinator from clients '''
+
+def cp_mgen_log(host):
+  import io
+  import os
+  
+  if not is_ap(host):
+    os.system(
+        'scp testbed@%s:mgen_%s.log ~/wifi-testbed/src/testbed-tools/wifi_measurement/mgen_log' % (host, host))
+
+
+
+
+''' Make plot from mgen log file on coordinator '''
+
+def make_plot(host):
+  import io
+  import os
+  import subprocess
+  import fileinput
+  
+  if not is_ap(host):
+    os.system(
+    'trpr mgen input ~/wifi-testbed/src/testbed-tools/wifi_measurement/mgen_log/mgen_%s.log output ~/wifi-testbed/src/testbed-tools/wifi_measurement/mgen_log/plot_%s.gp' % (host, host))
+
+    for line in fileinput.FileInput("wifi_measurement/mgen_log/plot_%s.gp" % host, inplace=1):
+      line = line.replace("/home/marino/wifi-testbed/src/testbed-tools/wifi_measurement/mgen_log/", "")
+      print(line.strip())
+
+
+
+''' Logging UDP traffic on port 5001 on clients '''
+
+def log_mgen_udp(host):
+  import io
+  import time
+  import os
+  from contextlib import closing
+
+  if not is_ap(host):
+    
+    kill_mgen()
+    run_command(host, "sudo rm mgen_%s.log" % host)
+    run_command(host, "nohup sudo mgen event 'listen udp 5001' output mgen_%s.log >/dev/null 2>&1 &" % host)
+    
+    with closing(io.StringIO()) as result:
+      if run_command(host, 'ps caux | pgrep mgen', out=result) == 0:
+        pid=(result.getvalue())
+        print (pid)
+
+
+''' Logging TCP traffic on port 5000 on clients '''
+
+def log_mgen_tcp(host):
+  import io
+  import time
+  import os
+  from contextlib import closing
+
+  if not is_ap(host):
+    
+    kill_mgen()
+    run_command(host, "sudo rm mgen_%s.log" % host)
+    run_command(host, "nohup sudo mgen event 'listen tcp 5000' output mgen_%s.log >/dev/null 2>&1 &" % host)
+
+    with closing(io.StringIO()) as result:
+      if run_command(host, 'ps caux | pgrep mgen', out=result) == 0:
+        pid=(result.getvalue())
+        print (pid)
+
+
+
+''' Killing any ongoing mgen process on host'''
+
+def kill_mgen():
+  import io
+  
+  run_command(host, "sudo killall mgen")
+
 ###################################################################
 #######################Endringer Slutt#############################
 ###################################################################
+
+
+
+
 
 parser = argparse.ArgumentParser(description='Utility used to control and configure wifi testbed nodes.')
 
@@ -753,6 +965,65 @@ parser_topo.add_argument('--info', dest="info", action="store_true", help="print
 parser_topo.add_argument('--dump', dest="dump", action="store_true", help="dump current configuration from nodes and output in json topology format")
 parser_topo.add_argument('--state', dest="state", action="store_true", help="as dump, but includes additional information like client ips and associated state")
 parser_topo.add_argument('--load', dest='load', type=str, help="load topology from json topology file")
+
+
+##########################################################################################
+########################## NEW FUNCTIONS BY HIOA STUDENTS ################################
+###### Authors: Marius Joergensen, Suleman Hersi, Negar Mazhari, Kristian Blomseth ########
+##########################################################################################
+
+
+parser_measurement = subparsers.add_parser(
+    'wifi_measurement', help='Working progress..... By Marius')
+    
+parser_measurement.add_argument(
+    'node', nargs='+', help='node id from 1 to 21')
+    
+# parser_measurement.add_argument(
+#     '--get_results', action="store_true", help='returning results from node')
+    
+parser_measurement.add_argument(
+    '--run_complete_test', action="store_true", help='run a complete test on testbed with the Wi-Fi Measurement tool')
+    
+parser_measurement.add_argument(
+    '--upload_mgen', action="store_true", help='upload mgen flows to node (AP)')
+    
+parser_measurement.add_argument(
+    '--start_mgen_udp', action="store_true", help='start mgen flow on node(AP)')
+
+parser_measurement.add_argument(
+    '--start_mgen_tcp', action="store_true", help='start mgen flow on node(AP)')
+    
+parser_measurement.add_argument(
+    '--make_mgen_udp', action="store_true", help='make mgen flows')
+
+parser_measurement.add_argument(
+    '--make_mgen_tcp', action="store_true", help='make mgen flows')
+
+# parser_measurement.add_argument(
+#     '--make_upload', action="store_true", help='make mgen flows and upload')
+#     
+# parser_measurement.add_argument(
+#     '--copy', action="store_true", help='copies log file from client to coordinator')
+    
+parser_measurement.add_argument(
+    '--log', action="store_true", help='log mgen results')
+    
+# parser_measurement.add_argument(
+#     '--plot', action="store_true", help='makes gnuplot file via "trpr"')
+    
+parser_measurement.add_argument(
+    '--get_associated_clients', action="store_true", help='Prepares topology in tmp-file before conducting measurements')
+    
+# parser_measurement.add_argument(
+#     '--kill_mgen', action="store_true", help='kill mgen listen')
+
+parser_measurement.add_argument('--sort_results', action="store_true", help='Arranges and views results from plot files')
+
+
+##########################################################################################
+########################### END OF NEW SCRIPTS BY HIOA ###################################
+##########################################################################################
 
 parser_ap = subparsers.add_parser('wifi', help='configure access point or client')
 parser_ap.add_argument('node', nargs='+', help='node id from 1 to 21')
@@ -1009,3 +1280,83 @@ if args.subparser == "wifi":
                     print("# Enabling wifi on client %s" % host)
                     e.submit(enable_client, host=host)
 
+
+##########################################################################################
+########################## NEW FUNCTIONS BY HIOA STUDENTS ################################
+###### Authors: Marius Joergensen, Suleman Hersi, Negar Mazhari, Kristian Blomseth ########
+##########################################################################################
+
+if args.subparser == "wifi_measurement":
+  import time
+  import os
+  isap = parallel_isap(args.node)
+
+  from concurrent.futures import ThreadPoolExecutor
+  with ThreadPoolExecutor(max_workers=30) as e:
+    for nodeid in args.node:
+      host = nodeinfo[nodeid]['hostname']
+
+      if args.get_associated_clients:
+        get_associated_clients()
+  
+      if args.run_complete_test:
+        if os.stat('wifi_measurement/mgen_scripts.mgn').st_size <=0:
+          make_mgen(host)
+        upload_mgen(host)
+        log_mgen(host)        
+        start_mgen(host)
+        os.system('> wifi_measurement/mgen_scripts.mgn')        
+        time.sleep(40)
+        cp_mgen_log(host)
+        make_plot(host)
+        
+
+      
+      if args.upload_mgen:
+        upload_mgen(host)
+
+      if args.start_mgen_udp:
+        log_mgen_udp(host)
+        start_mgen(host)
+        time.sleep(40)
+        cp_mgen_log(host)
+        make_plot(host)
+        
+      if args.start_mgen_tcp:
+        #log_mgen_tcp(host)
+        start_mgen(host)
+        time.sleep(40)
+        cp_mgen_log(host)
+        make_plot(host)
+    
+      
+
+
+      if args.make_mgen_udp:
+        make_mgen_udp(host)
+
+      if args.make_mgen_tcp:
+        make_mgen_tcp(host)
+    
+#      if args.make_upload:
+#        make_mgen()
+#        upload_mgen(host)
+
+      if args.log:
+        log_mgen_tcp(host)
+
+#      if args.copy:
+#        cp_mgen_log(host)
+
+#      if args.plot:
+#        make_plot(host)      
+
+#      if args.kill_mgen:
+#        kill_mgen(host)
+
+      if args.sort_results:
+        sort_results()
+
+##########################################################################################
+########################### END OF NEW SCRIPTS BY HIOA ###################################
+##########################################################################################
