@@ -649,7 +649,7 @@ def get_topology():
             k = k + 1
 
             if '"' in lines_in_file[i].strip()[0]:      # Kvalifiseet soek
-                if lines_in_file[i+2].strip() == ('"ap": true,'): #FIX THIS!!!
+                if lines_in_file[i+2].strip() == ('"ap": true,') and lines_in_file[i+6].strip() == ('"enabled": true,'): #FIX THIS!!!
                     tt = lines_in_file[i].strip()[1:3]          # PLukker ut 5. og 6. tegn
                     if '"' in tt[1]:          # f.eks "1"
                         output_file.write(tt[0]+":")
