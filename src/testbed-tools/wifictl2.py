@@ -997,6 +997,7 @@ def frequency(d):
     availableFreq = [1 ,6, 11]
     dmin = [10**6] * len(d)
 
+    #finds shortest distances for every link
     for i in range(len(d)):
         for j in range(len(d)):
             if i != j && d[i][j] < dmin[i]:
