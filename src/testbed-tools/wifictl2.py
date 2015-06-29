@@ -961,7 +961,7 @@ def kill_mgen():
 
 
 ''' Finding shortest distances between the links in the topology'''
-def ShortestDistances(nodeids):
+def shortestDistances(nodeids):
     from math import sqrt
 
     APx = []
@@ -969,6 +969,7 @@ def ShortestDistances(nodeids):
     Cx = []
     Cy = []
     isap = parallel_isap(nodeids)
+
     for nodeid in nodeids:
         #Get location of nodes
         if isap[int(nodeid)]:
@@ -982,14 +983,25 @@ def ShortestDistances(nodeids):
 
     for i in range(len(APx)):
         for j in range(len(APx)):
-            a1 = sqrt((APx[i]-Cx[j])**2+(APy[i]-Cy[j])**2)
-            a2 = sqrt((APx[j]-Cx[i])**2+(APy[j]-Cy[i])**2)
-            a3 = sqrt((APx[i]-APx[j])**2+(APy[i]-APy[j])**2)
-            a4 = sqrt((Cx[i]-Cx[j])**2+(Cy[i]-Cy[j])**2)
+            a1 = sqrt((APx[i]-Cx[j])**2 + (APy[i]-Cy[j])**2)
+            a2 = sqrt((APx[j]-Cx[i])**2 + (APy[j]-Cy[i])**2)
+            a3 = sqrt((APx[i]-APx[j])**2 + (APy[i]-APy[j])**2)
+            a4 = sqrt((Cx[i]-Cx[j])**2 + (Cy[i]-Cy[j])**2)
 
             d[i][j] = min(a1, a2, a3, a4) #shortest distance matrix
 
     return d
+
+def frequency(d):
+    fbest = [0] * len(d)
+    availableFreq = [1 ,6, 11]
+    dmin = [10**6] * len(d)
+
+    for i in range(len(d)):
+        for j in range(len(d)):
+            if i != j && d[i][j] < dmin[i]:
+                dmin[i] = d[i][j]
+    print(dmin)
 
 
 
@@ -1145,7 +1157,7 @@ if args.node != None:
 ###################################################################
 if args.subparser == 'smartFreq':
             if args.distances:
-                d = ShortestDistances(args.node)
+                d = shortestDistances(args.node)
 
 
 
