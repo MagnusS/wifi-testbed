@@ -962,11 +962,32 @@ def kill_mgen():
 
 ''' Finding shortest distances between the links in the topology'''
 def ShortestDistances(nodeids):
-    for nodeid in nodeids:
-        distX = nodeinfo[nodeid]["location"][1].append()
-        distY = nodeinfo[nodeid]["location"][3].append()
-    print(distX)
+    from math import sqrt
 
+    APx = []
+    APy = []
+    Cx = []
+    Cy = []
+    isap = parallel_isap(nodeids)
+    for nodeid in nodeids:
+        if isap[int(nodeid)]:
+            APx.append(nodeinfo[nodeid]["location"][0])
+            APy.append(nodeinfo[nodeid]["location"][2])
+        else:
+            Cx.append(nodeinfo[nodeid]["location"][0])
+            Cy.append(nodeinfo[nodeid]["location"][2])
+
+    d = [[0 for x in range(len(APx))] for x in range(len(APx))]
+
+    for i in range(len(APx)):
+        for j in range(len(APx)):
+            a1 = sqrt((APx[i]-Cx[j])**2+(APy[i]-Cy[j])**2)
+            a2 = sqrt((APx[j]-Cx[i])**2+(APy[j]-Cy[i])**2)
+            a3 = sqrt((APx[i]-APx[j])**2+(APy[i]-APy[j])**2)
+            a4 = sqrt((Cx[i]-Cx[j])**2+(Cy[i]-Cy[j])**2)
+            d[i][j] = min(a1, a2, a3, a4)
+
+    return d
 
 
 
@@ -1082,11 +1103,13 @@ parser_graph.add_argument('--outputfile', type=str, help="dump output to file")
 parser_graph.add_argument('--live', action="store_true", help='recalculate periodically')
 
 ###################################################################
-#######################Endringer###################################
+#######################Smart Frequency#############################
 ###################################################################
-parser_measurement = subparsers.add_parser('top', help='Testing')
+parser_measurement = subparsers.add_parser('smartFreq', help='Testing')
 
-parser_measurement.add_argument('--topologi', action="store_true", help='get current topology')
+parser_measurement.add_argument('node', nargs='+', help='node id from 1 to 21')
+
+parser_measurement.add_argument('--distances', action="store_true", help='Get distances between links')
 
 
 
@@ -1116,11 +1139,11 @@ if args.node != None:
         nodes.append(nodeinfo[clientid]['hostname'])
 
 ###################################################################
-#######################Endringer###################################
+#######################Smart Frequency#############################
 ###################################################################
-if args.subparser == 'top':
-    if args.topologi:
-        get_topology()
+if args.subparser == 'smartFreq':
+            if args.distances:
+                d = ShortestDistances(args.node)
 
 
 
