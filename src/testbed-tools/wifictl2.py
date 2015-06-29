@@ -249,35 +249,48 @@ def configure_ap(host, nodename, default_channel=6, default_txpower=20, password
 
 ''' Configure node as access point by changing network configuration, setting up hostapd and so on. Will reboot the device after install '''
 def configure_client(host, nodename, ssid, key, reboot=True, default_txpower=20):
-    print("Configuring client on %s" % host)
-    subst = dict(
-            node = nodename,
-            wifissid = ssid,
-            wifipassword = key,
-            txpower = default_txpower)
+  print("Configuring client on %s" % host)
+  c = int(nodename.split('e', 1)[1])
+  if 0 <= c <= 9:
+    cl_ip = ("10.0.100.10%s" % c)
+  else:
+    cl_ip = ("10.0.100.1%s" % c)
+  netmask = ('255.255.255.0')
+  gateway = ('10.0.100.1')
+  subst = dict(
+      node=nodename,
+      wifissid=ssid,
+      wifipassword=key,
+      txpower=default_txpower,
+      ipaddr=cl_ip,
+      netmask=netmask,
+      gateway=gateway
+  )
 
-    debug( "Substitutions...")
-    debug("%s" % subst)
+  debug("Substitutions...")
+  debug("%s" % subst)
 
-    debug( "Uploading templates...")
-    interfaces = parse_template("templates/interfaces.client.template", subst)
-    upload_file_from_string(host, "tmp_interfaces", interfaces)
-    run_command(host, "sudo mv tmp_interfaces /etc/network/interfaces")
+  debug("Uploading templates...")
+  interfaces = parse_template(
+      "templates/interfaces.client.static.template", subst)
+  upload_file_from_string(host, "tmp_interfaces", interfaces)
+  run_command(host, "sudo mv tmp_interfaces /etc/network/interfaces")
 
-    debug( "Remove AP configuration files")
-    run_command(host, "sudo rm /etc/hostapd/hostapd.conf")
-    run_command(host, "sudo rm /etc/dnsmasq.conf")
-    run_command(host, "sudo rm /etc/network/if-up.d/iptables")
-    run_command(host, "sudo rm /etc/iptables.up.rules")
+  debug("Remove AP configuration files")
+  run_command(host, "sudo rm /etc/hostapd/hostapd.conf")
+  run_command(host, "sudo rm /etc/dnsmasq.conf")
+  run_command(host, "sudo rm /etc/network/if-up.d/iptables")
+  run_command(host, "sudo rm /etc/iptables.up.rules")
 
-    debug("Enabling iperf server")
-    iperfconf = parse_template("templates/iperf.supervisor.conf", dict())
-    upload_file_from_string(host, "tmp_iperf.conf", iperfconf)
-    run_command(host, "sudo mv tmp_iperf.conf /etc/supervisor/conf.d/iperfserver.conf")
-    run_command(host, "sudo supervisorctl update")
+  debug("Enabling iperf server")
+  iperfconf = parse_template("templates/iperf.supervisor.conf", dict())
+  upload_file_from_string(host, "tmp_iperf.conf", iperfconf)
+  run_command(
+      host, "sudo mv tmp_iperf.conf /etc/supervisor/conf.d/iperfserver.conf")
+  run_command(host, "sudo supervisorctl update")
 
-    if reboot:
-        reboot_host(host)
+  if reboot:
+    reboot_host(host)
 
 ''' Reboot host '''
 def reboot_host(host):
@@ -626,7 +639,7 @@ def get_associated_clients():
 
   debug("Dumping current topolgy to wifi_measurent/tmp_topology.txt....  taking aprox. 1.5 minutes")
   os.system("> wifi_measurement/tmp_topology.txt")
-  os.system("python3 wifictl.py topology --dump 1 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 >> wifi_measurement/tmp_topology.txt") #ONLY NODES DEFINED IN CURRENT TOPOLOGY IS LISTED
+  os.system("python3 wifictl.py topology --dump 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 >> wifi_measurement/tmp_topology.txt") #ONLY NODES DEFINED IN CURRENT TOPOLOGY IS LISTED
   debug("Finished dumping")
 
 
@@ -965,6 +978,11 @@ parser_topo.add_argument('--info', dest="info", action="store_true", help="print
 parser_topo.add_argument('--dump', dest="dump", action="store_true", help="dump current configuration from nodes and output in json topology format")
 parser_topo.add_argument('--state', dest="state", action="store_true", help="as dump, but includes additional information like client ips and associated state")
 parser_topo.add_argument('--load', dest='load', type=str, help="load topology from json topology file")
+
+
+
+
+
 
 
 ##########################################################################################
