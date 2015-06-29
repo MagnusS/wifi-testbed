@@ -639,7 +639,7 @@ def get_associated_clients():
 
   debug("Dumping current topolgy to wifi_measurent/tmp_topology.txt....  taking aprox. 1.5 minutes")
   os.system("> wifi_measurement/tmp_topology.txt")
-  os.system("python3 wifictl.py topology --dump 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 >> wifi_measurement/tmp_topology.txt") #ONLY NODES DEFINED IN CURRENT TOPOLOGY IS LISTED
+  os.system("python3 wifictl.py topology --dump 1 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 >> wifi_measurement/tmp_topology.txt") #ONLY NODES DEFINED IN CURRENT TOPOLOGY IS LISTED
   debug("Finished dumping")
 
 
@@ -951,6 +951,23 @@ def kill_mgen():
 ###################################################################
 #######################Endringer Slutt#############################
 ###################################################################
+
+
+
+
+###################################################################
+#######################Smart Frequency#############################
+###################################################################
+
+
+''' Finding shortest distances between the links in the topology'''
+def ShortestDistances(nodeids):
+    for nodeid in nodeids:
+        distX = nodeinfo[nodeid]["location"][1].append()
+        distY = nodeinfo[nodeid]["location"][3].append()
+    print(distX)
+
+
 
 
 
