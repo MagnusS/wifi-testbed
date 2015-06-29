@@ -970,6 +970,7 @@ def ShortestDistances(nodeids):
     Cy = []
     isap = parallel_isap(nodeids)
     for nodeid in nodeids:
+        #Get location of nodes
         if isap[int(nodeid)]:
             APx.append(nodeinfo[nodeid]["location"][0])
             APy.append(nodeinfo[nodeid]["location"][2])
@@ -985,7 +986,8 @@ def ShortestDistances(nodeids):
             a2 = sqrt((APx[j]-Cx[i])**2+(APy[j]-Cy[i])**2)
             a3 = sqrt((APx[i]-APx[j])**2+(APy[i]-APy[j])**2)
             a4 = sqrt((Cx[i]-Cx[j])**2+(Cy[i]-Cy[j])**2)
-            d[i][j] = min(a1, a2, a3, a4)
+
+            d[i][j] = min(a1, a2, a3, a4) #shortest distance matrix
 
     return d
 
