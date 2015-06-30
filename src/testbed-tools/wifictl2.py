@@ -1045,7 +1045,14 @@ def frequency(d):
                 indexes.append(idx)
 
         nextAP = findSmallestDist(d, indexes)
-    print(nextAP)
+
+        debug("Check if all available frequencies have been assigned")
+        if assignedFreq < len(availableFreq):
+            assignedFreq += 1
+            freqToChoose = list(set(availableFreq)- set(fbest))
+            fbest[nextAP] = choice(freqToChoose)
+            continue
+    print(fbest)
 
 
 def findSmallestDist(d, indexes):
