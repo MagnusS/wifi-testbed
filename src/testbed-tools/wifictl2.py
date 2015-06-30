@@ -1024,6 +1024,7 @@ def frequency(d):
     debug("Assigning frequency to the closest links")
     mindex = dmin.index(min(dmin))
     fbest[mindex] = choice(availableFreq)
+    nodeindex[mindex]['channel'] = fbest[mindex]
     for i in range(mindex, len(dmin)):
         if dmin[i] == dmin[mindex]:
             mindex2 = i
@@ -1031,13 +1032,31 @@ def frequency(d):
     while fbest[mindex2] == fbest[mindex]:
         fbest[mindex2] = choice(availableFreq)
 
+    nodeindex[mindex2]['channel'] = fbest[mindex2]
+
     assignedFreq = 2
 
     debug("Assign frequency to the other links")
     for freq in range(2, len(fbest)):
         indexes = []
-        #for nodeid in nodeindex:
-            #if 
+        #Finding indexes(links) that are assigned to a frequency
+        for idx in nodeindex:
+            if nodeindex[idx]['channel']:
+                indexes.append(idx)
+
+        nextAP = findSmallestDist(d, indexes)
+    print(nextAP)
+
+
+def findSmallestDist(d, indexes):
+    minval = 10**6
+    debug("Finds the link with shortest longest distance to other links with assigned frequency")
+    for i in indexes:
+        for j in range(len(d)):
+            if i != j and d[i][j] < minval and nodeindex[j]['channel'] == 0:
+                minval = d[i][j]
+                nextAP = j
+    return nextAP
 
 
 
