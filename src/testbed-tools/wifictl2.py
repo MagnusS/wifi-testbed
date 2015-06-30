@@ -977,9 +977,11 @@ def shortestDistances(nodeids):
     index = 0
     for nodeid in nodeids:
         if isap[int(nodeid)]:
-            nodeindex[str(index)]['AP'] = nodeid
-            nodeindex[str(index)]['channel'] = 0
+            nodeindex[index]['AP'] = nodeid
+            nodeindex[index]['channel'] = 0
             index += 1
+
+    print(nodeindex)
 
 
     debug("Get location of nodes")
@@ -1201,7 +1203,7 @@ if args.subparser == 'smartFreq':
         nAP = sum(parallel_isap(args.node))
         nodeindex = {}
         for i in range(nAP):
-            nodeindex[str(i)] = {}
+            nodeindex[i] = {}
 
 
     if args.distances:
