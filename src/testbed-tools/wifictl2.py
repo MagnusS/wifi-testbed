@@ -977,11 +977,9 @@ def shortestDistances(nodeids):
     index = 0
     for nodeid in nodeids:
         if isap[int(nodeid)]:
-            nodeindex[nodeid]['index'] = index
-            nodeindex[nodeid]['channel'] = 0
+            nodeindex[str(index)]['AP'] = nodeid
+            nodeindex[str(index)]['channel'] = 0
             index += 1
-
-    print(nodeindex)
 
 
     debug("Get location of nodes")
@@ -1015,13 +1013,13 @@ def frequency(d):
     availableFreq = [1 ,6, 11]
     dmin = [10**6] * len(d)
 
-    #finds shortest distances for every link
+    debug("Find shortest distances for every link")
     for i in range(len(d)):
         for j in range(len(d)):
             if i != j and d[i][j] < dmin[i]:
                 dmin[i] = d[i][j]
 
-    #Assign frequency to the closest links
+    debug("Assigning frequency to the closest links")
     mindex = dmin.index(min(dmin))
     fbest[mindex] = choice(availableFreq)
     for i in range(mindex, len(dmin)):
@@ -1033,7 +1031,11 @@ def frequency(d):
 
     assignedFreq = 2
 
-    #for freq in range(2, len(fbest)):
+    debug("Assign frequency to the other links")
+    for freq in range(2, len(fbest)):
+        indexes = []
+        #for nodeid in nodeindex:
+            #if 
 
 
 
@@ -1196,9 +1198,10 @@ if args.subparser == 'smartFreq':
 
     debug("Creating map with info about index each node will have in the frequency array (fbest) in frequency")
     if args.node != None:
+        nAP = sum(parallel_isap(args.node))
         nodeindex = {}
-        for nodeid in args.node:
-            nodeindex[nodeid] = {}
+        for i in range(nAP):
+            nodeindex[str(i)] = {}
 
 
     if args.distances:
