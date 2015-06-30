@@ -980,6 +980,7 @@ def shortestDistances(nodeids):
             APy.append(nodeinfo[nodeid]["location"][2])
 
             clientid = results[nodeid]["clients"]
+            #Should fix so that it works more general, for more than 1 client
             Cx.append(nodeinfo[str(clientid[0])]["location"][0])
             Cy.append(nodeinfo[str(clientid[0])]["location"][2])
 
@@ -997,6 +998,7 @@ def shortestDistances(nodeids):
     return d
 
 def frequency(d):
+    from random import choice
     fbest = [0] * len(d)
     availableFreq = [1 ,6, 11]
     dmin = [10**6] * len(d)
@@ -1007,6 +1009,19 @@ def frequency(d):
             if i != j and d[i][j] < dmin[i]:
                 dmin[i] = d[i][j]
 
+    mindex = dmin.index(min(dmin))
+    fbest[mindex] = choice(availableFreq)
+    for i in range(mindex, len(dmin)):
+        if dmin[i] == dmin[mindex]:
+            mindex2 = i
+    fbest[mindex2] = choice(availableFreq)
+    while fbest[mindex2] == fbest[mindex]:
+        fbest[mindex2] = choice(availableFreq)
+
+    print(fbest)
+
+
+'''TODO: Finn ut hvordan ha en sammenheng mellom AP og kanaler i arrayet fbest'''
 
 
 
