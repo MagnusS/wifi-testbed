@@ -11,7 +11,7 @@ from string import Template
 import argparse
 import sys
 
-DEBUG=False
+DEBUG=True
 
 apt_dependencies="supervisor libconfig-dev python-twisted python-paramiko libpthread-stubs0-dev ntpdate tcpdump rfkill wget wpasupplicant vim wireless-tools wavemon htop iw bridge-utils rcconf dnsmasq hostapd iperf"
 
@@ -973,8 +973,19 @@ def shortestDistances(nodeids):
     Cy = []
     isap = parallel_isap(nodeids)
 
+    debug("Assign correct indexes to nodeindex")
+    index = 0
     for nodeid in nodeids:
-        #Get location of nodes
+        if isap[int(nodeid)]:
+            nodeindex[nodeid]['index'] = index
+            nodeindex[nodeid]['channel'] = 0
+            index += 1
+
+    print(nodeindex)
+
+
+    debug("Get location of nodes")
+    for nodeid in nodeids:
         if isap[int(nodeid)]:
             APx.append(nodeinfo[nodeid]["location"][0])
             APy.append(nodeinfo[nodeid]["location"][2])
@@ -985,6 +996,7 @@ def shortestDistances(nodeids):
             Cy.append(nodeinfo[str(clientid[0])]["location"][2])
 
 
+    debug("Get shortest distance matrix")
     d = numpy.zeros(shape = (len(APx), len(APx)))
     for i in range(len(APx)):
         for j in range(len(APx)):
@@ -1187,10 +1199,6 @@ if args.subparser == 'smartFreq':
         nodeindex = {}
         for nodeid in args.node:
             nodeindex[nodeid] = {}
-            nodeindex[nodeid]['index'] = 0
-            nodeindex[nodeid]['channel'] = 0
-
-    print(nodeindex)
 
 
     if args.distances:
