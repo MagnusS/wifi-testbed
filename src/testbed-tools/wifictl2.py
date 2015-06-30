@@ -1009,6 +1009,7 @@ def frequency(d):
             if i != j and d[i][j] < dmin[i]:
                 dmin[i] = d[i][j]
 
+    #Assign frequency to the closest links
     mindex = dmin.index(min(dmin))
     fbest[mindex] = choice(availableFreq)
     for i in range(mindex, len(dmin)):
@@ -1018,7 +1019,10 @@ def frequency(d):
     while fbest[mindex2] == fbest[mindex]:
         fbest[mindex2] = choice(availableFreq)
 
-    print(fbest)
+    assignedFreq = 2
+
+    #for freq in range(2, len(fbest)):
+
 
 
 '''TODO: Finn ut hvordan ha en sammenheng mellom AP og kanaler i arrayet fbest'''
@@ -1174,10 +1178,24 @@ if args.node != None:
 ###################################################################
 #######################Smart Frequency#############################
 ###################################################################
+
+
 if args.subparser == 'smartFreq':
-            if args.distances:
-                d = shortestDistances(args.node)
-                frequency(d)
+
+    debug("Creating map with info about index each node will have in the frequency array (fbest) in frequency")
+    if args.node != None:
+        nodeindex = {}
+        for nodeid in args.node:
+            nodeindex[nodeid] = {}
+            nodeindex[nodeid]['index'] = 0
+            nodeindex[nodeid]['channel'] = 0
+
+    print(nodeindex)
+
+
+    if args.distances:
+        d = shortestDistances(args.node)
+        frequency(d)
 
 
 
