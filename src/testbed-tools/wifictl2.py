@@ -1099,6 +1099,10 @@ def findNextFreq(d, indexes, nextAPindex, availableFreq):
 
 def uploadSmartFreq(nodeids):
     results = dump_topology(nodeids)
+    isap = parallel_isap(nodeids)
+    for nodeid in nodeids:
+        if isap[int(nodeid)] == False:
+            results[nodeid].pop('channel', None)
     for index in nodeindex:
         nodeid = nodeindex[index]['AP']
         channel = nodeindex[index]['channel']
