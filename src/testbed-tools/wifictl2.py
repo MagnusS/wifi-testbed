@@ -981,8 +981,6 @@ def shortestDistances(nodeids):
             nodeindex[index]['channel'] = 0
             index += 1
 
-    print(nodeindex)
-
 
     debug("Get location of nodes")
     for nodeid in nodeids:
@@ -1044,15 +1042,21 @@ def frequency(d):
             if nodeindex[idx]['channel']:
                 indexes.append(idx)
 
-        nextAP = findSmallestDist(d, indexes)
+        nextAPindex = findSmallestDist(d, indexes)
 
         debug("Check if all available frequencies have been assigned")
         if assignedFreq < len(availableFreq):
             assignedFreq += 1
             freqToChoose = list(set(availableFreq)- set(fbest))
-            fbest[nextAP] = choice(freqToChoose)
+            fbest[nextAPindex] = choice(freqToChoose)
+            nodeindex[nextAPindex]['channel'] = fbest[nextAPindex] #Inserting the channel into nodeindex map
             continue
-    print(fbest)
+
+        channel = findNextFreq(d, indexes, nextAPindex, availableFreq) #Legg til en funskjon her som finner neste frekvens!!!
+        fbest[nextAPindex] = channel
+        nodeindex[nextAPindex]['channel'] = channel
+        availableFreq = [1, 6, 11]
+    return fbest
 
 
 def findSmallestDist(d, indexes):
@@ -1064,6 +1068,34 @@ def findSmallestDist(d, indexes):
                 minval = d[i][j]
                 nextAP = j
     return nextAP
+
+def findNextFreq(d, indexes, nextAPindex, availableFreq):
+    import numpy as np
+
+    frqs = availableFreq
+    relevantd = []
+    debug("Finding relevant distances to check when seraching for next frequency to assign")
+    for i in indexes:
+        relevantd.append(d[i][nextAPindex])
+    relevantd.sort(reverse=True) #Sorting the array in descending order
+
+    debug("Finding the frequency that is furthest away from the link we want to assign a frequency to")
+    while len(frqs) > 1:
+        currSmallest = relevantd.pop() #Getting current smallest value in relevantd
+        relindex = np.where(d==currSmallest) #Getting the indexes from d where the value is the currSmallest
+        debug("Getting index for the closest link with a frequency")
+        relindex = relindex[0]
+        #Should add functionality if shortest longest distance is equal between two links!!!!!
+        if relindex[0] == nextAPindex: #Make sure that the index chosen is not nextAPindex, want index for a link with a frequency
+            relindex = relindex[1]
+        else:
+            relindex = relindex[0]
+
+        channel = nodeindex[relindex]['channel']
+        frqs.remove(channel)
+
+    return frqs[0]
+
 
 
 
@@ -1234,7 +1266,7 @@ if args.subparser == 'smartFreq':
 
     if args.distances:
         d = shortestDistances(args.node)
-        frequency(d)
+        fbest = frequency(d)
 
 
 
