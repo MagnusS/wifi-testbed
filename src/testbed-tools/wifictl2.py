@@ -594,8 +594,8 @@ def dump_topology(nodeids):
     for nodeid in nodeids:
         results[nodeid] = {}
         if isap[int(nodeid)]:
-            results[nodeid]['clients'] = []
             results[nodeid]['ap'] = True
+            results[nodeid]['clients'] = []
         else:
             results[nodeid]['ap'] = False
 
@@ -1097,6 +1097,20 @@ def findNextFreq(d, indexes, nextAPindex, availableFreq):
     return frqs[0]
 
 
+def uploadSmartFreq(nodeids):
+    results = dump_topology(nodeids)
+    for index in nodeindex:
+        nodeid = nodeindex[index]['AP']
+        channel = nodeindex[index]['channel']
+        results[nodeid]['channel'] = channel
+    with open("topologies/topology_smart.json", "w") as infile:
+        json.dump(results, infile, indent=4)
+
+
+    #Maa gjoere en del endringer her. Blir feil...
+
+
+
 
 
 '''TODO: Finn ut hvordan ha en sammenheng mellom AP og kanaler i arrayet fbest'''
@@ -1220,7 +1234,9 @@ parser_measurement = subparsers.add_parser('smartFreq', help='Testing')
 
 parser_measurement.add_argument('node', nargs='+', help='node id from 1 to 21')
 
-parser_measurement.add_argument('--distances', action="store_true", help='Get distances between links')
+parser_measurement.add_argument('--allocation', action="store_true", help='Do a smart frequency allocation')
+
+parser_measurement.add_argument('--upload_smartfreq', action="store_true", help="Uploads the new frequency allocation")
 
 
 
@@ -1264,9 +1280,16 @@ if args.subparser == 'smartFreq':
             nodeindex[i] = {}
 
 
-    if args.distances:
+    if args.allocation:
         d = shortestDistances(args.node)
         fbest = frequency(d)
+
+    if args.upload_smartfreq:
+        d = shortestDistances(args.node)
+        fbest = frequency(d)
+        uploadSmartFreq(args.node)
+
+
 
 
 
