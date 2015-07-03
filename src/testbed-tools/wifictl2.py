@@ -1111,7 +1111,12 @@ def uploadSmartFreq(nodeids):
         json.dump(results, infile, indent=4)
 
 
-    #Maa gjoere en del endringer her. Blir feil...
+
+def limitRate(nodeid):
+    nodeid = nodeid[0]
+    host = nodeinfo[nodeid]['hostname']
+    run_command(host, "sudo tc qdisc add dev wlan0 root tbf rate 3mbit burst 10kb latency 50ms")
+
 
 
 
@@ -1234,13 +1239,15 @@ parser_graph.add_argument('--live', action="store_true", help='recalculate perio
 ###################################################################
 #######################Smart Frequency#############################
 ###################################################################
-parser_measurement = subparsers.add_parser('smartFreq', help='Testing')
+parser_smart = subparsers.add_parser('smartFreq', help='Testing')
 
-parser_measurement.add_argument('node', nargs='+', help='node id from 1 to 21')
+parser_smart.add_argument('node', nargs='+', help='node id from 1 to 21')
 
-parser_measurement.add_argument('--allocation', action="store_true", help='Do a smart frequency allocation')
+parser_smart.add_argument('--allocation', action="store_true", help='Do a smart frequency allocation')
 
-parser_measurement.add_argument('--upload_smartfreq', action="store_true", help="Uploads the new frequency allocation")
+parser_smart.add_argument('--upload_smartfreq', action="store_true", help="Uploads the new frequency allocation")
+
+parser_smart.add_argument('--limitrate', action='store_true', help="Run command on node to limit its bandwidth")
 
 
 
@@ -1292,6 +1299,9 @@ if args.subparser == 'smartFreq':
         d = shortestDistances(args.node)
         fbest = frequency(d)
         uploadSmartFreq(args.node)
+
+    if args.limitrate:
+        limitRate(args.node)
 
 
 
