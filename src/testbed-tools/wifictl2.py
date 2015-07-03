@@ -1055,6 +1055,11 @@ def frequency(d):
         channel = findNextFreq(d, indexes, nextAPindex, availableFreq) #Legg til en funskjon her som finner neste frekvens!!!
         fbest[nextAPindex] = channel
         nodeindex[nextAPindex]['channel'] = channel
+
+        debug('Set limit on AP')
+        host = nodeinfo[nodeindex[nextAPindex]['AP']]['hostname']
+        limitRate(host)
+
         availableFreq = [1, 6, 11]
     return fbest
 
@@ -1112,11 +1117,14 @@ def uploadSmartFreq(nodeids):
 
 
 
-def limitRate(nodeid):
-    nodeid = nodeid[0]
-    host = nodeinfo[nodeid]['hostname']
+def limitRate(host):
     run_command(host, "sudo tc qdisc add dev wlan0 root tbf rate 3mbit burst 10kb latency 50ms")
+    #Denne maa ta inn host som argument
 
+def removeAllLimits(nodeids):
+    for nodeid in nodeids:
+        host = nodeinfo[nodeid]['hostname']
+        run_command(host, "sudo tc qdisc del dev wlan0 root")
 
 
 
@@ -1249,6 +1257,8 @@ parser_smart.add_argument('--upload_smartfreq', action="store_true", help="Uploa
 
 parser_smart.add_argument('--limitrate', action='store_true', help="Run command on node to limit its bandwidth")
 
+parser_smart.add_argument('--removelimits', action='store_true', help="Removing all bandwidth limits on nodes")
+
 
 
 
@@ -1302,6 +1312,9 @@ if args.subparser == 'smartFreq':
 
     if args.limitrate:
         limitRate(args.node)
+
+    if args.removelimits:
+        removeAllLimits(args.node)
 
 
 
