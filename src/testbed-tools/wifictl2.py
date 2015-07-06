@@ -966,6 +966,8 @@ def shortestDistances(nodeids):
     import numpy
 
     results = dump_topology(nodeids)
+    global smartres 
+    smartres = results #Copy to glabal variable smartres
 
     APx = []
     APy = []
@@ -1103,22 +1105,22 @@ def findNextFreq(d, indexes, nextAPindex, availableFreq):
 
 
 def uploadSmartFreq(nodeids):
-    results = dump_topology(nodeids)
     isap = parallel_isap(nodeids)
     for nodeid in nodeids:
         if isap[int(nodeid)] == False:
-            results[nodeid].pop('channel', None)
+            smartres[nodeid].pop('channel', None)
     for index in nodeindex:
         nodeid = nodeindex[index]['AP']
         channel = nodeindex[index]['channel']
-        results[nodeid]['channel'] = channel
+        smartres[nodeid]['channel'] = channel
     with open("topologies/topology_smart.json", "w") as infile:
-        json.dump(results, infile, indent=4)
+        json.dump(smartres, infile, indent=4)
 
 
 
 def limitRate(host):
-    run_command(host, "sudo tc qdisc add dev wlan0 root tbf rate 3mbit burst 10kb latency 50ms")
+    run_command(host, "sudo tc qdisc add dev wlan0 root tbf rate 4mbit burst 10kb latency 50ms mtu 6000")
+    #Får mest riktig throughput med mtu 6000, maa finne ut hvorfor mtu 6000 maa vaere med!!!
     #Denne maa ta inn host som argument
 
 def removeAllLimits(nodeids):
@@ -1297,6 +1299,7 @@ if args.subparser == 'smartFreq':
     if args.node != None:
         nAP = sum(parallel_isap(args.node))
         nodeindex = {}
+        smartres = {} #Use to get a copy of results from dump_topology to make the script more efficient
         for i in range(nAP):
             nodeindex[i] = {}
 
@@ -1369,7 +1372,7 @@ if args.subparser == "test":
             results[n] = dict(minstrel_avg = np.mean(minstrel), 
                              minstrel_std = np.std(minstrel, ddof=1), 
                              minstrel_median = np.median(minstrel), 
-                             throughput = fut_throughput[n].result())
+                             throughput = str(int(fut_throughput[n].result()) / 1024))
 
         print(json.dumps(results, indent=4))
 
