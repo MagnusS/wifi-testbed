@@ -13,7 +13,7 @@ import sys
 
 DEBUG=True
 
-apt_dependencies="supervisor libconfig-dev python-twisted python-paramiko libpthread-stubs0-dev ntpdate tcpdump rfkill wget wpasupplicant vim wireless-tools wavemon htop iw bridge-utils rcconf dnsmasq hostapd iperf"
+apt_dependencies="supervisor libconfig-dev python-twisted python-paramiko libpthread-stubs0-dev ntpdate tcpdump rfkill wget wpasupplicant vim wireless-tools wavemon htop iw bridge-utils rcconf dnsmasq hostapd iperf wondershaper"
 
 def debug(say, **kwargs):
     if DEBUG:
@@ -1119,14 +1119,17 @@ def uploadSmartFreq(nodeids):
 
 
 def limitRate(host):
-    run_command(host, "sudo tc qdisc add dev wlan0 root tbf rate 4mbit burst 10kb latency 50ms mtu 6000")
-    #Får mest riktig throughput med mtu 6000, maa finne ut hvorfor mtu 6000 maa vaere med!!!
+    #run_command(host, "sudo tc qdisc add dev wlan0 root tbf rate 4mbit burst 10kb latency 50ms mtu 100000")
+    run_command(host, "sudo wondershaper wlan0 3000 3000") #3000 ned og 3000 opp paa wlan0
+    #Faar mest riktig throughput med mtu 6000, maa finne ut hvorfor mtu 6000 maa vaere med!!!
     #Denne maa ta inn host som argument
+    #MTU verdi paa nodene er 1500
 
 def removeAllLimits(nodeids):
     for nodeid in nodeids:
         host = nodeinfo[nodeid]['hostname']
-        run_command(host, "sudo tc qdisc del dev wlan0 root")
+        #run_command(host, "sudo tc qdisc del dev wlan0 root")
+        run_command(host, "sudo wondershaper clear wlan0")
 
 
 
@@ -1299,7 +1302,6 @@ if args.subparser == 'smartFreq':
     if args.node != None:
         nAP = sum(parallel_isap(args.node))
         nodeindex = {}
-        smartres = {} #Use to get a copy of results from dump_topology to make the script more efficient
         for i in range(nAP):
             nodeindex[i] = {}
 
