@@ -986,14 +986,14 @@ def shortestDistances(nodeids):
 
     debug("Get location of nodes")
     for nodeid in nodeids:
-        if isap[int(nodeid)]:
+        if isap[int(nodeid)]: #Location of APs
             APx.append(nodeinfo[nodeid]["location"][0])
             APy.append(nodeinfo[nodeid]["location"][2])
 
             clientid = results[nodeid]["clients"]
-            #Should fix so that it works more general, for more than 1 client
-            Cx.append(nodeinfo[str(clientid[0])]["location"][0])
-            Cy.append(nodeinfo[str(clientid[0])]["location"][2])
+            for client in clientid: #Location of clients
+                Cx.append(nodeinfo[str(client)]["location"][0])
+                Cy.append(nodeinfo[str(client)]["location"][2])
 
 
     debug("Get shortest distance matrix")
@@ -1120,7 +1120,7 @@ def uploadSmartFreq(nodeids):
 
 def limitRate(host):
     #run_command(host, "sudo tc qdisc add dev wlan0 root tbf rate 4mbit burst 10kb latency 50ms mtu 100000")
-    run_command(host, "sudo wondershaper wlan0 3000 3000") #3000 ned og 3000 opp paa wlan0
+    run_command(host, "sudo wondershaper wlan0 6000 6000") #3000 down og 3000 up on wlan0
     #Faar mest riktig throughput med mtu 6000, maa finne ut hvorfor mtu 6000 maa vaere med!!!
     #Denne maa ta inn host som argument
     #MTU verdi paa nodene er 1500
