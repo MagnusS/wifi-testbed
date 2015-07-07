@@ -1090,16 +1090,33 @@ def findNextFreq(d, indexes, nextAPindex, availableFreq):
     while len(frqs) > 1:
         currSmallest = relevantd.pop() #Getting current smallest value in relevantd
         relindex = np.where(d==currSmallest) #Getting the indexes from d where the value is the currSmallest
+
         debug("Getting index for the closest link with a frequency")
         relindex = relindex[0]
-        #Should add functionality if shortest longest distance is equal between two links!!!!!
-        if relindex[0] == nextAPindex: #Make sure that the index chosen is not nextAPindex, want index for a link with a frequency
-            relindex = relindex[1]
-        else:
-            relindex = relindex[0]
+        if len(relindex) == 2: #if only one shortest distance for the next AP
+            if relindex[0] == nextAPindex: #Make sure that the index chosen is not nextAPindex, want index for a link with a frequency
+                relindex = relindex[1]
+            else:
+                relindex = relindex[0]
+            channel = nodeindex[relindex]['channel']
+            frqs.remove(channel)
 
-        channel = nodeindex[relindex]['channel']
-        frqs.remove(channel)
+        elif len(frqs) == (len(relindex) - 1): #If shortest longest distance is equal between several links. Choose the second closest link and remove that frequency. -1 because should not count nextAPindex
+            debug('Shortest longest distance is equal between several links and number of links with shortest distance is equal to number of available frequencies')
+            for i in range(len(relindex)):
+                if relindex[i] == nextAPindex:
+                    tmp_relindex = np.delete(relindex, i)
+            relindex = tmp_relindex
+            currSmallest = relevantd.pop()
+            relindex = find(d[:, nextAPindex] == currSmallest)
+            channel = nodeindex[relindex]['channel']
+            frqs.remove(channel)
+
+        else: #If more than one shortest longest distance, but len(frqs) > len(relindex)-1
+            for i in relindex:
+                if i != nextAPindex:
+                    channel = nodeindex[relindex]['channel']
+                    frqs.remove(channel)
 
     return frqs[0]
 
