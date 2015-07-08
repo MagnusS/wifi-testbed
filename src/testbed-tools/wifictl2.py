@@ -535,10 +535,12 @@ def get_iperf_throughput(ap, time=10):
 
     with closing(io.StringIO()) as result:
         # use sed to extract Tx-Power from iwconfig output
-        if run_command(ap, "sudo cat /var/lib/misc/dnsmasq.leases | head -n 1 | cut -f 3 -d ' '", out=result) == 0:
-            clientip = result.getvalue().strip()
-        else:
-            raise Exception("Unable to obtain client IP from dnsmasq.leases")
+
+        clientip = '10.0.100.1' #If static ip and only one client. This need to be done differently if more than one client
+        #if run_command(ap, "sudo cat /var/lib/misc/dnsmasq.leases | head -n 1 | cut -f 3 -d ' '", out=result) == 0:
+        #    clientip = result.getvalue().strip()
+        #else:
+        #    raise Exception("Unable to obtain client IP from dnsmasq.leases")
 
     with closing(io.StringIO()) as result:
         # use sed to extract Tx-Power from iwconfig output
@@ -1056,7 +1058,7 @@ def frequency(d):
 
         debug('Set limit on AP')
         host = nodeinfo[nodeindex[nextAPindex]['AP']]['hostname']
-        limitRate(host)
+        limitRate()
 
         availableFreq = [1, 6, 11]
     return fbest
@@ -1132,8 +1134,10 @@ def uploadSmartFreq(nodeids):
 
 
 def limitRate(host):
+    if host[0].isdigit():
+        host = 'node%s' % host[0]
     #run_command(host, "sudo tc qdisc add dev wlan0 root tbf rate 4mbit burst 10kb latency 50ms mtu 100000")
-    run_command(host, "sudo wondershaper wlan0 6000 6000") #3000 down og 3000 up on wlan0
+    run_command(host, "sudo wondershaper wlan0 3000 3000") #3000 down og 3000 up on wlan0
     #Faar mest riktig throughput med mtu 6000, maa finne ut hvorfor mtu 6000 maa vaere med!!!
     #Denne maa ta inn host som argument
     #MTU verdi paa nodene er 1500
@@ -1143,6 +1147,11 @@ def removeAllLimits(nodeids):
         host = nodeinfo[nodeid]['hostname']
         #run_command(host, "sudo tc qdisc del dev wlan0 root")
         run_command(host, "sudo wondershaper clear wlan0")
+
+def limitRateMany(nodeids):
+    for nodeid in nodeids:
+        host = nodeinfo[nodeid]['hostname']
+        run_command(host, "sudo wondershaper wlan0 3000 3000")
 
 
 
@@ -1329,7 +1338,7 @@ if args.subparser == 'smartFreq':
         uploadSmartFreq(args.node)
 
     if args.limitrate:
-        limitRate(args.node)
+        limitRateMany(args.node)
 
     if args.removelimits:
         removeAllLimits(args.node)
@@ -1421,7 +1430,7 @@ if args.subparser == "topology":
 
 
         # reformat so clients know their ssid, as the json file has client lists on the ap entries
-        clientnrmap = {}
+        clientnrmap = {} #Map to check what number a client should get for its ip-address
         for f in topology:
             if topology[f]['enabled'] == True and topology[f]['ap'] == True:
                 found_client = False
