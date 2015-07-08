@@ -256,7 +256,7 @@ def configure_client(host, nodename, ssid, key, reboot=True, default_txpower=20)
   else:
     cl_ip = ("10.0.100.1%s" % c)
   netmask = ('255.255.255.0')
-  gateway = ('10.0.100.1')
+  gateway = ('10.0.100.254')
   subst = dict(
       node=nodename,
       wifissid=ssid,
