@@ -248,13 +248,9 @@ def configure_ap(host, nodename, default_channel=6, default_txpower=20, password
         reboot_host(host)
 
 ''' Configure node as access point by changing network configuration, setting up hostapd and so on. Will reboot the device after install '''
-def configure_client(host, nodename, ssid, key, reboot=True, default_txpower=20):
+def configure_client(host, nodename, ssid, key, clientnr, reboot=True, default_txpower=20):
   print("Configuring client on %s" % host)
-  c = int(nodename.split('e', 1)[1])
-  if 0 <= c <= 9:
-    cl_ip = ("10.0.100.10%s" % c)
-  else:
-    cl_ip = ("10.0.100.1%s" % c)
+  cl_ip = ("10.0.100.%s" % clientnr)
   netmask = ('255.255.255.0')
   gateway = ('10.0.100.254')
   subst = dict(
@@ -1425,15 +1421,19 @@ if args.subparser == "topology":
 
 
         # reformat so clients know their ssid, as the json file has client lists on the ap entries
+        clientnrmap = {}
         for f in topology:
             if topology[f]['enabled'] == True and topology[f]['ap'] == True:
                 found_client = False
+                clientnr = 0
                 for client in map(str, topology[f]['clients']):
                     found_client = True
                     topology[client]['ssid'] = nodeinfo[f]['ssid']
                     wifipassword = generate_password(16)
                     topology[client]['key'] = wifipassword
                     topology[f]['key'] = wifipassword
+                    clientnr += 1
+                    clientnrmap[client] = clientnr
 
         # check that no clients are without APs
         for f in topology:
@@ -1454,7 +1454,7 @@ if args.subparser == "topology":
                                 default_txpower=topology[t]['txpower'], password=topology[t]['key'], reboot=True))
                     else:
                         futures.append(e.submit(configure_client, host=nodeinfo[t]['hostname'], nodename=nodeinfo[t]['hostname'], 
-                                ssid=topology[t]['ssid'], key=topology[t]['key'], reboot=True, default_txpower=topology[t]['txpower']))
+                                ssid=topology[t]['ssid'], key=topology[t]['key'], clientnr=str(clientnrmap[t]), reboot=True, default_txpower=topology[t]['txpower']))
 
 if args.subparser == "setup":
     if args.deps:
@@ -1481,9 +1481,11 @@ if args.subparser == "setup":
             configure_ap(ap_hostname, ap_hostname, password=wifipassword, default_channel=int(ap_channel), default_txpower=int(ap_tx))
             if clients:
                 print("Installing client configurations")
+                clientnr = 0
                 for clientid in clients.split(","):
                     print("Configuring client node%s" % clientid)
-                    configure_client("node%s" % clientid, "node%s" % clientid, key=wifipassword, default_txpower=int(cli_tx), ssid="%s-wifi" % ap_host)
+                    clientnr += 1
+                    configure_client("node%s" % clientid, "node%s" % clientid, key=wifipassword, clientnr=str(clientnr), default_txpower=int(cli_tx), ssid="%s-wifi" % ap_host)
 
 if args.subparser == "wifi":
     isap = parallel_isap(args.node)
