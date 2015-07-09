@@ -537,6 +537,7 @@ def get_iperf_throughput(ap, time=10):
         # use sed to extract Tx-Power from iwconfig output
 
         clientip = '10.0.100.1' #If static ip and only one client. This need to be done differently if more than one client
+
         #if run_command(ap, "sudo cat /var/lib/misc/dnsmasq.leases | head -n 1 | cut -f 3 -d ' '", out=result) == 0:
         #    clientip = result.getvalue().strip()
         #else:
@@ -1012,6 +1013,7 @@ def frequency(d):
     fbest = [0] * len(d)
     availableFreq = [1 ,6, 11]
     dmin = [10**6] * len(d)
+    assignedFreq = 0
 
     debug("Find shortest distances for every link")
     for i in range(len(d)):
@@ -1023,16 +1025,18 @@ def frequency(d):
     mindex = dmin.index(min(dmin))
     fbest[mindex] = choice(availableFreq)
     nodeindex[mindex]['channel'] = fbest[mindex]
+    assignedFreq +=1
+    nodeindex[mindex]['assigned'] = assignedFreq #Assigned value is used to keep track of when AP has been assigned with a frequency. Also, it gives information about which links that has shortest longest distances
     for i in range(mindex, len(dmin)):
         if dmin[i] == dmin[mindex]:
             mindex2 = i
     fbest[mindex2] = choice(availableFreq)
     while fbest[mindex2] == fbest[mindex]:
         fbest[mindex2] = choice(availableFreq)
+    assignedFreq += 1
 
     nodeindex[mindex2]['channel'] = fbest[mindex2]
-
-    assignedFreq = 2
+    nodeindex[mindex2]['assigned'] = assignedFreq
 
     debug("Assign frequency to the other links")
     for freq in range(2, len(fbest)):
@@ -1050,17 +1054,32 @@ def frequency(d):
             freqToChoose = list(set(availableFreq)- set(fbest))
             fbest[nextAPindex] = choice(freqToChoose)
             nodeindex[nextAPindex]['channel'] = fbest[nextAPindex] #Inserting the channel into nodeindex map
+            nodeindex[nextAPindex]['assigned'] = assignedFreq
             continue
 
-        channel = findNextFreq(d, indexes, nextAPindex, availableFreq) #Legg til en funskjon her som finner neste frekvens!!!
+        channel = findNextFreq(d, indexes, nextAPindex, availableFreq)
+        assignedFreq += 1
+
         fbest[nextAPindex] = channel
         nodeindex[nextAPindex]['channel'] = channel
+        nodeindex[nextAPindex]['assigned'] = assignedFreq
 
         debug('Set limit on AP')
         host = nodeinfo[nodeindex[nextAPindex]['AP']]['hostname']
-        limitRate()
+        limitRate(host)
 
         availableFreq = [1, 6, 11]
+
+    print(nodeindex)
+    debug('Moving 4th and 5th closest channels to channel 3 or 9 to reduce interference')
+    for index in nodeindex:
+        if nodeindex[index]['assigned'] == 4 or nodeindex[index]['assigned'] == 5:
+            channel = nodeindex[index]['channel']
+            channel = movechannel(channel)
+            nodeindex[index]['channel'] = channel
+            fbest[index] = channel
+
+    print(fbest)
     return fbest
 
 
@@ -1119,6 +1138,16 @@ def findNextFreq(d, indexes, nextAPindex, availableFreq):
     return frqs[0]
 
 
+def movechannel(channel):
+    #Moving channel between either 1 and 6 or 6 and 11. This is to reduce interference. 
+    #Could probably be done more sophisticated.
+    if channel == 1:
+        channel = 3
+    elif channel == 6 or channel == 11:
+        channel = 9
+    return channel
+
+
 def uploadSmartFreq(nodeids):
     isap = parallel_isap(nodeids)
     for nodeid in nodeids:
@@ -1137,9 +1166,8 @@ def limitRate(host):
     if host[0].isdigit():
         host = 'node%s' % host[0]
     #run_command(host, "sudo tc qdisc add dev wlan0 root tbf rate 4mbit burst 10kb latency 50ms mtu 100000")
-    run_command(host, "sudo wondershaper wlan0 3000 3000") #3000 down og 3000 up on wlan0
+    run_command(host, "sudo wondershaper wlan0 4000 4000") #4000 down og 4000 up on wlan0
     #Faar mest riktig throughput med mtu 6000, maa finne ut hvorfor mtu 6000 maa vaere med!!!
-    #Denne maa ta inn host som argument
     #MTU verdi paa nodene er 1500
 
 def removeAllLimits(nodeids):
@@ -1151,14 +1179,13 @@ def removeAllLimits(nodeids):
 def limitRateMany(nodeids):
     for nodeid in nodeids:
         host = nodeinfo[nodeid]['hostname']
-        run_command(host, "sudo wondershaper wlan0 3000 3000")
+        run_command(host, "sudo wondershaper wlan0 4000 4000")
 
 
 
 
 
 '''TODO: Finn ut hvordan ha en sammenheng mellom AP og kanaler i arrayet fbest'''
-
 
 
 
@@ -1396,7 +1423,7 @@ if args.subparser == "test":
             results[n] = dict(minstrel_avg = np.mean(minstrel), 
                              minstrel_std = np.std(minstrel, ddof=1), 
                              minstrel_median = np.median(minstrel), 
-                             throughput = str(int(fut_throughput[n].result()) / 1024))
+                             throughput = str(round(int(fut_throughput[n].result()) / 1024)))
 
         print(json.dumps(results, indent=4))
 
