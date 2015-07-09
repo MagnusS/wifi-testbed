@@ -1070,7 +1070,8 @@ def frequency(d):
 
         availableFreq = [1, 6, 11]
 
-    print(nodeindex)
+    fbest = regroupchannels(fbest, d) #Make sure that the channel the link with shortest distance to other links on the same frequency is 6
+
     debug('Moving 4th and 5th closest channels to channel 3 or 9 to reduce interference')
     for index in nodeindex:
         if nodeindex[index]['assigned'] == 4 or nodeindex[index]['assigned'] == 5:
@@ -1080,6 +1081,7 @@ def frequency(d):
             fbest[index] = channel
 
     print(fbest)
+    print(nodeindex)
     return fbest
 
 
@@ -1138,9 +1140,39 @@ def findNextFreq(d, indexes, nextAPindex, availableFreq):
     return frqs[0]
 
 
+def regroupchannels(fbest, d):
+    dmin = [10**6] * 10
+    debug('Regrouping channels')
+
+    #Finding shortest distances between links one the same channel
+    for i in range(len(d)):
+        for j in range(len(d)):
+            if i != j and d[i][j] < dmin[i] and fbest[i] == fbest[j]:
+                dmin[i] = d[i][j]
+
+    mindex = dmin.index(min(dmin))
+
+    #Make sure shortest distance between links on same frequency get frequency 6
+    if fbest[mindex] != 6:
+        changeChannel = fbest[mindex] #Finding channel with shortest distance
+        fbestcopy = fbest #Copy of fbest
+        fbestcopy = [6 if x == changeChannel else x for x in fbestcopy] #Change all elements with changeChannel as value to 6
+        for i in range(len(fbest)):
+            if fbest[i] == 6:
+                fbestcopy[i] = changeChannel #Changes elements with value 6 in both fbest and fbestcopy
+        fbest = fbestcopy
+
+        #Update values in for channel in nodeindex
+        for i in range(len(fbest)):
+            nodeindex[i]['channel'] = fbest[i]
+
+    return fbest
+
+
 def movechannel(channel):
     #Moving channel between either 1 and 6 or 6 and 11. This is to reduce interference. 
     #Could probably be done more sophisticated.
+    debug('Moving channels')
     if channel == 1:
         channel = 3
     elif channel == 6 or channel == 11:
