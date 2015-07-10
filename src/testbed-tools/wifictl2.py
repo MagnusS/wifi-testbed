@@ -1176,20 +1176,6 @@ def regroupchannels(fbest, d):
     return fbest
 
 
-def movechannel(channel):
-    #Moving channel between either 1 and 6 or 6 and 11. This is to reduce interference. 
-    #Could probably be done more sophisticated.
-    debug('Moving channels')
-    if channel == 1 or channel == 6:
-        channel += 2 
-    elif channel == 11 or channel == 6:
-        channel -= 2
-    elif channel < 6:
-        channel += 1
-    else:
-        channel -= 1
-    return channel
-
 
 def uploadSmartFreq(nodeids):
     isap = parallel_isap(nodeids)
@@ -1222,7 +1208,7 @@ def removeAllLimits(nodeids):
 def limitRateMany(nodeids):
     for nodeid in nodeids:
         host = nodeinfo[nodeid]['hostname']
-        run_command(host, "sudo wondershaper wlan0 5000 5000")
+        run_command(host, "sudo wondershaper wlan0 4000 4000")
 
 def testTopology(nodeids, limit=3000, time=10): #limit (in kbit/s) is smallest accaptable bandwidth. Set by user
     isap = parallel_isap(args.node)
@@ -1242,6 +1228,8 @@ def testTopology(nodeids, limit=3000, time=10): #limit (in kbit/s) is smallest a
         results[n] = dict(throughput = str(round(int(fut_throughput[n].result()) / 1024)))
     print(json.dumps(results, indent=4))
 
+    lastMovedHost = None #Last AP that changed channel
+    lastChangedChannel = None
     for nodeid in results:
         if int(results[nodeid]['throughput']) < limit:
             debug('Changing channel on node %s' % nodeid)
@@ -1249,9 +1237,39 @@ def testTopology(nodeids, limit=3000, time=10): #limit (in kbit/s) is smallest a
             host = nodeinfo[nodeid]['hostname']
             channel = get_channel(host)
             print(channel)
-            channel = movechannel(channel)
+            channel = movechannel(channel, lastMovedHost, lastChangedChannel)
             print(channel)
             ap_change_channel(host, channel)
+            lastMovedHost = host
+            lastChangedChannel = channel
+
+
+def movechannel(channel, lastMovedHost, lastChangedChannel):
+    #Moving channel between either 1 and 6 or 6 and 11. This is to reduce interference. 
+    #Could probably be done more sophisticated.
+    debug('Moving channels')
+
+    if channel == 1 and lastChangedChannel < 6:
+        lastMovedChannel = get_channel(lastMovedHost) #Get the previous moved channel
+        lastMovedChannel = 9 #Change the last moved channel to channel between 6 and 11
+        ap_change_channel(lastMovedHost, lastMovedChannel)
+
+        channel += 2
+
+    elif channel == 6 and lastChangedChannel == 6: #If both channels was on channel 6, then they must be moved in different directions
+        channel -= 3
+
+    else:
+        if channel == 1 or channel == 6:
+            channel += 2 
+        elif channel == 11:
+            channel -= 2
+        elif channel < 6:
+            channel += 1
+        else:
+            channel -= 1
+
+    return channel
 
 
 
