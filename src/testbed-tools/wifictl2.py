@@ -549,7 +549,6 @@ def get_iperf_throughput(ap, time=10):
             throughput = result.getvalue().strip()
         else:
             raise Exception("Unable to test throughput")
-
     return throughput        
 
 def get_minstrel_fer(ap, time=10):
@@ -1010,6 +1009,11 @@ def shortestDistances(nodeids):
 
 def frequency(d):
     from random import choice
+
+    limitRateFlag = False # Set to True if there should be limit on throughput for some links
+    movechannelFlag = False #Set to True if some channels should be set between 1 and 6 and/or 1 and 11
+    regroupchannelsFlag = False #Set to True if assigned channels should be regrouped
+
     fbest = [0] * len(d)
     availableFreq = [1 ,6, 11]
     dmin = [10**6] * len(d)
@@ -1066,19 +1070,22 @@ def frequency(d):
 
         debug('Set limit on AP')
         host = nodeinfo[nodeindex[nextAPindex]['AP']]['hostname']
-        limitRate(host)
+
+        if limitRateFlag:
+            limitRate(host)
 
         availableFreq = [1, 6, 11]
 
-    fbest = regroupchannels(fbest, d) #Make sure that the channel the link with shortest distance to other links on the same frequency is 6
-
-    debug('Moving 4th and 5th closest channels to channel 3 or 9 to reduce interference')
-    for index in nodeindex:
-        if nodeindex[index]['assigned'] == 4 or nodeindex[index]['assigned'] == 5:
-            channel = nodeindex[index]['channel']
-            channel = movechannel(channel)
-            nodeindex[index]['channel'] = channel
-            fbest[index] = channel
+    if regroupchannelsFlag:
+        fbest = regroupchannels(fbest, d) #Make sure that the channel the link with shortest distance to other links on the same frequency is 6
+    if movechannelFlag:
+        debug('Moving 4th and 5th closest channels to channel 3 or 9 to reduce interference')
+        for index in nodeindex:
+            if nodeindex[index]['assigned'] == 4 or nodeindex[index]['assigned'] == 5:
+                channel = nodeindex[index]['channel']
+                channel = movechannel(channel)
+                nodeindex[index]['channel'] = channel
+                fbest[index] = channel
 
     print(fbest)
     print(nodeindex)
@@ -1173,10 +1180,14 @@ def movechannel(channel):
     #Moving channel between either 1 and 6 or 6 and 11. This is to reduce interference. 
     #Could probably be done more sophisticated.
     debug('Moving channels')
-    if channel == 1:
-        channel = 3
-    elif channel == 6 or channel == 11:
-        channel = 9
+    if channel == 1 or channel == 6:
+        channel += 2 
+    elif channel == 11 or channel == 6:
+        channel -= 2
+    elif channel < 6:
+        channel += 1
+    else:
+        channel -= 1
     return channel
 
 
@@ -1211,8 +1222,36 @@ def removeAllLimits(nodeids):
 def limitRateMany(nodeids):
     for nodeid in nodeids:
         host = nodeinfo[nodeid]['hostname']
-        run_command(host, "sudo wondershaper wlan0 4000 4000")
+        run_command(host, "sudo wondershaper wlan0 5000 5000")
 
+def testTopology(nodeids, limit=3000, time=10): #limit (in kbit/s) is smallest accaptable bandwidth. Set by user
+    isap = parallel_isap(args.node)
+
+    debug('Running iperf test')
+    from concurrent.futures import ThreadPoolExecutor
+
+    fut_throughput = {}
+    print("# Testing throughput on AP nodes for %d seconds" % time)
+    with ThreadPoolExecutor(max_workers=60) as e:
+        for nodeid in nodeids:
+            if isap[int( nodeid )]:
+                fut_throughput[nodeid] = e.submit(get_iperf_throughput, ap=nodeinfo[nodeid]['hostname'], time=time)
+    results = {}
+    for n in fut_throughput:
+        import numpy as np
+        results[n] = dict(throughput = str(round(int(fut_throughput[n].result()) / 1024)))
+    print(json.dumps(results, indent=4))
+
+    for nodeid in results:
+        if int(results[nodeid]['throughput']) < limit:
+            debug('Changing channel on node %s' % nodeid)
+
+            host = nodeinfo[nodeid]['hostname']
+            channel = get_channel(host)
+            print(channel)
+            channel = movechannel(channel)
+            print(channel)
+            ap_change_channel(host, channel)
 
 
 
@@ -1345,6 +1384,8 @@ parser_smart.add_argument('--limitrate', action='store_true', help="Run command 
 
 parser_smart.add_argument('--removelimits', action='store_true', help="Removing all bandwidth limits on nodes")
 
+parser_smart.add_argument('--test_topology', action='store_true', help="Check if current topology give desired results")
+
 
 
 
@@ -1401,6 +1442,9 @@ if args.subparser == 'smartFreq':
 
     if args.removelimits:
         removeAllLimits(args.node)
+
+    if args.test_topology:
+        testTopology(args.node)
 
 
 
