@@ -1009,6 +1009,7 @@ def shortestDistances(nodeids):
 
 def frequency(d):
     from random import choice
+    import json
 
     limitRateFlag = False # Set to True if there should be limit on throughput for some links
     movechannelFlag = False #Set to True if some channels should be set between 1 and 6 and/or 1 and 11
@@ -1068,16 +1069,21 @@ def frequency(d):
         nodeindex[nextAPindex]['channel'] = channel
         nodeindex[nextAPindex]['assigned'] = assignedFreq
 
-        debug('Set limit on AP')
-        host = nodeinfo[nodeindex[nextAPindex]['AP']]['hostname']
+#        debug('Set limit on AP')
+#        host = nodeinfo[nodeindex[nextAPindex]['AP']]['hostname']
 
-        if limitRateFlag:
-            limitRate(host)
+#        if limitRateFlag:
+#            limitRate(host)
 
         availableFreq = [1, 6, 11]
 
+    obj = open('assigned.json', 'w')
+    json.dump(nodeindex, obj, indent=4)
+    obj.close()
+
     if regroupchannelsFlag:
         fbest = regroupchannels(fbest, d) #Make sure that the channel the link with shortest distance to other links on the same frequency is 6
+
     if movechannelFlag:
         debug('Moving 4th and 5th closest channels to channel 3 or 9 to reduce interference')
         for index in nodeindex:
@@ -1210,6 +1216,60 @@ def limitRateMany(nodeids):
         host = nodeinfo[nodeid]['hostname']
         run_command(host, "sudo wondershaper wlan0 4000 4000")
 
+
+def set_rates(host):
+    import json
+    import os
+
+    os.system("> wifi_measurement/mgen_scripts.mgn") 
+    with open("assigned.json", "r") as f:
+        order = json.load(fp=f)
+
+    print(order)
+
+    for idx in order:
+        ap = order[idx]["AP"] #Get AP
+        assigned = int(order[idx]["assigned"]) #Get the number for when this AP got a channel assigned
+
+        debug("Creating mgen flow for node%s" % ap)
+
+        if assigned < 4: #The first assigned nodes. Does not get limit
+            packets = 8
+            packetSize = 1048576
+            set_mgen_flows_tcp(ap, packets, packetSize)
+
+        else: #The other ones gets a limit ([8 62500] is the same as 4000kbit/s)
+            packets = 8
+            packetSize = 62500
+            set_mgen_flows_tcp(ap, packets, packetSize)
+
+
+
+def set_mgen_flows_tcp(ap, packets, packetSize):
+    with open("wifi_measurement/aps_with_clients.txt") as tmp:
+        data = tmp.read()
+        lines = data.split("\n")
+        count = sum(1 for line in lines)
+        tot_lines = count - 1
+
+        for x in range(0, tot_lines):
+            AP = lines[x].split(":", 1)[0]
+            if ap != AP:
+                continue
+            clients = (lines[x].split(":", 1)[1].split(","))
+            count1 = sum(1 for line in clients)
+
+            for z in range(0, count1):
+                flow = (z + 1)
+        
+                with open("wifi_measurement/mgen_scripts.mgn", "a") as mgn:
+                    mgn.write("{0}:0.0 ON {1} TCP SRC 500{1} DST node{2}/5000 PERIODIC [{3} {4}]\n{0}:30.0 OFF {1}\n".format(ap, flow, clients[z], packets, packetSize))
+
+
+
+
+
+
 def testTopology(nodeids, limit=3000, time=10): #limit (in kbit/s) is smallest accaptable bandwidth. Set by user
     isap = parallel_isap(args.node)
 
@@ -1247,6 +1307,7 @@ def testTopology(nodeids, limit=3000, time=10): #limit (in kbit/s) is smallest a
 def movechannel(channel, lastMovedHost, lastChangedChannel):
     #Moving channel between either 1 and 6 or 6 and 11. This is to reduce interference. 
     #Could probably be done more sophisticated.
+    #NOT FINISHED WITH THIS ONE!!!!!!!
     debug('Moving channels')
 
     if channel == 1 and lastChangedChannel < 6:
@@ -1456,7 +1517,8 @@ if args.subparser == 'smartFreq':
         uploadSmartFreq(args.node)
 
     if args.limitrate:
-        limitRateMany(args.node)
+        #limitRateMany(args.node)
+        set_rates(args.node)
 
     if args.removelimits:
         removeAllLimits(args.node)
