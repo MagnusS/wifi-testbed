@@ -626,9 +626,10 @@ def dump_topology(nodeids):
 
 
 
-###################################################################
-#######################Endringer###################################
-###################################################################
+##########################################################################################
+########################## NEW FUNCTIONS BY HIOA STUDENTS ################################
+###### Authors: Marius Joergensen, Suleman Hersi, Negar Mazhari, Kristian Blomseth #######
+##########################################################################################
 
 ''' Dump current loaded topology to a temporary file'''
 
@@ -946,16 +947,16 @@ def kill_mgen():
   
   run_command(host, "sudo killall mgen")
 
-###################################################################
-#######################Endringer Slutt#############################
-###################################################################
+##########################################################################################
+########################### END OF NEW SCRIPTS BY HIOA ###################################
+##########################################################################################
 
 
 
 
-###################################################################
-#######################Smart Frequency#############################
-###################################################################
+#####################################################################
+####################### Smart Frequency #############################
+#####################################################################
 
 
 ''' Finding shortest distances between the links in the topology'''
@@ -963,9 +964,8 @@ def shortestDistances(nodeids):
     from math import sqrt
     import numpy
 
-    results = dump_topology(nodeids)
-    global smartres 
-    smartres = results #Copy to glabal variable smartres
+    global smartres
+    smartres = dump_topology(nodeids) #Creates a global variable with information about the topology
 
     APx = []
     APy = []
@@ -973,7 +973,7 @@ def shortestDistances(nodeids):
     Cy = []
     isap = parallel_isap(nodeids)
 
-    debug("Assign correct indexes to nodeindex")
+    debug("Assign correct indexes to nodeindex") #Nodeindex is a dictionary containing information about the correlation between the APs and the indexes used in the distance matrix
     index = 0
     for nodeid in nodeids:
         if isap[int(nodeid)]:
@@ -982,13 +982,13 @@ def shortestDistances(nodeids):
             index += 1
 
 
-    debug("Get location of nodes")
+    debug("Getting location of nodes")
     for nodeid in nodeids:
         if isap[int(nodeid)]: #Location of APs
             APx.append(nodeinfo[nodeid]["location"][0])
             APy.append(nodeinfo[nodeid]["location"][2])
 
-            clientid = results[nodeid]["clients"]
+            clientid = smartres[nodeid]["clients"]
             for client in clientid: #Location of clients
                 Cx.append(nodeinfo[str(client)]["location"][0])
                 Cy.append(nodeinfo[str(client)]["location"][2])
@@ -1012,13 +1012,12 @@ def frequency(d):
     import json
 
     limitRateFlag = False # Set to True if there should be limit on throughput for some links
-    movechannelFlag = False #Set to True if some channels should be set between 1 and 6 and/or 1 and 11
     regroupchannelsFlag = False #Set to True if assigned channels should be regrouped
 
-    fbest = [0] * len(d)
-    availableFreq = [1 ,6, 11]
-    dmin = [10**6] * len(d)
-    assignedFreq = 0
+    fbest = [0] * len(d) #Creates an array with the frequency distribution
+    availableFreq = [1 ,6, 11] #Frequencies to be assigned
+    dmin = [10**6] * len(d) #Array with shortest distance for every link
+    assignedFreq = 0 #This is used to see when de different APs got a channel assigned. Is also used to see which APs to get limit on their bandwidth if necessary
 
     debug("Find shortest distances for every link")
     for i in range(len(d)):
@@ -1026,22 +1025,25 @@ def frequency(d):
             if i != j and d[i][j] < dmin[i]:
                 dmin[i] = d[i][j]
 
-    debug("Assigning frequency to the closest links")
-    mindex = dmin.index(min(dmin))
-    fbest[mindex] = choice(availableFreq)
+    debug("Assigning frequency to the two closest links")
+
+    mindex = dmin.index(min(dmin)) #Find smallest value in dmin
+    fbest[mindex] = choice(availableFreq) #Pick a random frequency from availableFreq
     nodeindex[mindex]['channel'] = fbest[mindex]
     assignedFreq +=1
     nodeindex[mindex]['assigned'] = assignedFreq #Assigned value is used to keep track of when AP has been assigned with a frequency. Also, it gives information about which links that has shortest longest distances
-    for i in range(mindex, len(dmin)):
+
+    for i in range(mindex, len(dmin)): #Finds the other link with shortest distance
         if dmin[i] == dmin[mindex]:
             mindex2 = i
     fbest[mindex2] = choice(availableFreq)
-    while fbest[mindex2] == fbest[mindex]:
+    while fbest[mindex2] == fbest[mindex]: #Make sure it doesn't get the same frequency as the other close link
         fbest[mindex2] = choice(availableFreq)
     assignedFreq += 1
 
     nodeindex[mindex2]['channel'] = fbest[mindex2]
     nodeindex[mindex2]['assigned'] = assignedFreq
+
 
     debug("Assign frequency to the other links")
     for freq in range(2, len(fbest)):
@@ -1051,47 +1053,38 @@ def frequency(d):
             if nodeindex[idx]['channel']:
                 indexes.append(idx)
 
-        nextAPindex = findSmallestDist(d, indexes)
+        nextAPindex = findSmallestDist(d, indexes) #Finds next link with shortest longest distance from other links with assigned frequency
 
         debug("Check if all available frequencies have been assigned")
         if assignedFreq < len(availableFreq):
             assignedFreq += 1
             freqToChoose = list(set(availableFreq)- set(fbest))
-            fbest[nextAPindex] = choice(freqToChoose)
+            fbest[nextAPindex] = choice(freqToChoose) #Assign on of the channels that are not yet being used
             nodeindex[nextAPindex]['channel'] = fbest[nextAPindex] #Inserting the channel into nodeindex map
             nodeindex[nextAPindex]['assigned'] = assignedFreq
             continue
 
-        channel = findNextFreq(d, indexes, nextAPindex, availableFreq)
+        channel = findNextFreq(d, indexes, nextAPindex, availableFreq) #Finding the best channel for the next AP
         assignedFreq += 1
 
         fbest[nextAPindex] = channel
         nodeindex[nextAPindex]['channel'] = channel
         nodeindex[nextAPindex]['assigned'] = assignedFreq
 
-#        debug('Set limit on AP')
+#        debug('Set limit on AP')   #THIS IS USED IF LIMITS ON BANDWIDTH IS SET ON THE NIC
 #        host = nodeinfo[nodeindex[nextAPindex]['AP']]['hostname']
 
 #        if limitRateFlag:
 #            limitRate(host)
 
-        availableFreq = [1, 6, 11]
+        availableFreq = [1, 6, 11] #Updates availableFreq as it gets deleted in findNextFreq for some reason
 
-    obj = open('assigned.json', 'w')
+    obj = open('assigned.json', 'w') #This file is used to check which APs that should have limitation on its bandwidth in an mgen test
     json.dump(nodeindex, obj, indent=4)
     obj.close()
 
-    if regroupchannelsFlag:
-        fbest = regroupchannels(fbest, d) #Make sure that the channel the link with shortest distance to other links on the same frequency is 6
-
-    if movechannelFlag:
-        debug('Moving 4th and 5th closest channels to channel 3 or 9 to reduce interference')
-        for index in nodeindex:
-            if nodeindex[index]['assigned'] == 4 or nodeindex[index]['assigned'] == 5:
-                channel = nodeindex[index]['channel']
-                channel = movechannel(channel)
-                nodeindex[index]['channel'] = channel
-                fbest[index] = channel
+    if regroupchannelsFlag: 
+        fbest = regroupchannels(fbest, d) #Make sure that the channel the link with shortest distance to other links on the same frequency  
 
     print(fbest)
     print(nodeindex)
@@ -1133,7 +1126,7 @@ def findNextFreq(d, indexes, nextAPindex, availableFreq):
             channel = nodeindex[relindex]['channel']
             frqs.remove(channel)
 
-        elif len(frqs) == (len(relindex) - 1): #If shortest longest distance is equal between several links. Choose the second closest link and remove that frequency. -1 because should not count nextAPindex
+        elif len(frqs) == (len(relindex) - 1): #If shortest longest distance is equal between several links. Choose the second closest link and remove that frequency. -1 because should not count nextAPindex.
             debug('Shortest longest distance is equal between several links and number of links with shortest distance is equal to number of available frequencies')
             for i in range(len(relindex)):
                 if relindex[i] == nextAPindex:
@@ -1184,10 +1177,11 @@ def regroupchannels(fbest, d):
 
 
 def uploadSmartFreq(nodeids):
+    debug("Uploading topology to topologies/topology_smart.json")
     isap = parallel_isap(nodeids)
     for nodeid in nodeids:
         if isap[int(nodeid)] == False:
-            smartres[nodeid].pop('channel', None)
+            smartres[nodeid].pop('channel', None) #If client, does not need a channel index in topology file
     for index in nodeindex:
         nodeid = nodeindex[index]['AP']
         channel = nodeindex[index]['channel']
@@ -1202,7 +1196,6 @@ def limitRate(host):
         host = 'node%s' % host[0]
     #run_command(host, "sudo tc qdisc add dev wlan0 root tbf rate 4mbit burst 10kb latency 50ms mtu 100000")
     run_command(host, "sudo wondershaper wlan0 4000 4000") #4000 down og 4000 up on wlan0
-    #Faar mest riktig throughput med mtu 6000, maa finne ut hvorfor mtu 6000 maa vaere med!!!
     #MTU verdi paa nodene er 1500
 
 def removeAllLimits(nodeids):
@@ -1221,11 +1214,9 @@ def set_rates(host):
     import json
     import os
 
-    os.system("> wifi_measurement/mgen_scripts.mgn") 
+    os.system("> wifi_measurement/mgen_scripts.mgn") #Clear mgen_scripts.mgn
     with open("assigned.json", "r") as f:
         order = json.load(fp=f)
-
-    print(order)
 
     for idx in order:
         ap = order[idx]["AP"] #Get AP
@@ -1233,14 +1224,14 @@ def set_rates(host):
 
         debug("Creating mgen flow for node%s" % ap)
 
-        if assigned < 4: #The first assigned nodes. Does not get limit
+        if assigned < 4: #The first three assigned nodes. Does not get limit. Use less than 4 beacause assigned variable starts at 1
             packets = 8
             packetSize = 1048576
             set_mgen_flows_tcp(ap, packets, packetSize)
 
-        else: #The other ones gets a limit ([8 62500] is the same as 4000kbit/s)
+        else: #The other ones gets a limit ([8 78125] is the same as 5000kbit/s)
             packets = 8
-            packetSize = 62500
+            packetSize = 78125
             set_mgen_flows_tcp(ap, packets, packetSize)
 
 
@@ -1267,75 +1258,9 @@ def set_mgen_flows_tcp(ap, packets, packetSize):
 
 
 
-
-
-
-def testTopology(nodeids, limit=3000, time=10): #limit (in kbit/s) is smallest accaptable bandwidth. Set by user
-    isap = parallel_isap(args.node)
-
-    debug('Running iperf test')
-    from concurrent.futures import ThreadPoolExecutor
-
-    fut_throughput = {}
-    print("# Testing throughput on AP nodes for %d seconds" % time)
-    with ThreadPoolExecutor(max_workers=60) as e:
-        for nodeid in nodeids:
-            if isap[int( nodeid )]:
-                fut_throughput[nodeid] = e.submit(get_iperf_throughput, ap=nodeinfo[nodeid]['hostname'], time=time)
-    results = {}
-    for n in fut_throughput:
-        import numpy as np
-        results[n] = dict(throughput = str(round(int(fut_throughput[n].result()) / 1024)))
-    print(json.dumps(results, indent=4))
-
-    lastMovedHost = None #Last AP that changed channel
-    lastChangedChannel = None
-    for nodeid in results:
-        if int(results[nodeid]['throughput']) < limit:
-            debug('Changing channel on node %s' % nodeid)
-
-            host = nodeinfo[nodeid]['hostname']
-            channel = get_channel(host)
-            print(channel)
-            channel = movechannel(channel, lastMovedHost, lastChangedChannel)
-            print(channel)
-            ap_change_channel(host, channel)
-            lastMovedHost = host
-            lastChangedChannel = channel
-
-
-def movechannel(channel, lastMovedHost, lastChangedChannel):
-    #Moving channel between either 1 and 6 or 6 and 11. This is to reduce interference. 
-    #Could probably be done more sophisticated.
-    #NOT FINISHED WITH THIS ONE!!!!!!!
-    debug('Moving channels')
-
-    if channel == 1 and lastChangedChannel < 6:
-        lastMovedChannel = get_channel(lastMovedHost) #Get the previous moved channel
-        lastMovedChannel = 9 #Change the last moved channel to channel between 6 and 11
-        ap_change_channel(lastMovedHost, lastMovedChannel)
-
-        channel += 2
-
-    elif channel == 6 and lastChangedChannel == 6: #If both channels was on channel 6, then they must be moved in different directions
-        channel -= 3
-
-    else:
-        if channel == 1 or channel == 6:
-            channel += 2 
-        elif channel == 11:
-            channel -= 2
-        elif channel < 6:
-            channel += 1
-        else:
-            channel -= 1
-
-    return channel
-
-
-
-
-'''TODO: Finn ut hvordan ha en sammenheng mellom AP og kanaler i arrayet fbest'''
+#####################################################################
+####################### End Smart Frequency #########################
+#####################################################################
 
 
 
@@ -1371,7 +1296,7 @@ parser_topo.add_argument('--load', dest='load', type=str, help="load topology fr
 
 ##########################################################################################
 ########################## NEW FUNCTIONS BY HIOA STUDENTS ################################
-###### Authors: Marius Joergensen, Suleman Hersi, Negar Mazhari, Kristian Blomseth ########
+###### Authors: Marius Joergensen, Suleman Hersi, Negar Mazhari, Kristian Blomseth #######
 ##########################################################################################
 
 
@@ -1448,22 +1373,22 @@ parser_graph.add_argument('--show', action="store_true", help="show graph using 
 parser_graph.add_argument('--outputfile', type=str, help="dump output to file")
 parser_graph.add_argument('--live', action="store_true", help='recalculate periodically')
 
+
 ###################################################################
 #######################Smart Frequency#############################
 ###################################################################
 parser_smart = subparsers.add_parser('smartFreq', help='Testing')
 
 parser_smart.add_argument('node', nargs='+', help='node id from 1 to 21')
-
 parser_smart.add_argument('--allocation', action="store_true", help='Do a smart frequency allocation')
-
 parser_smart.add_argument('--upload_smartfreq', action="store_true", help="Uploads the new frequency allocation")
-
 parser_smart.add_argument('--limitrate', action='store_true', help="Run command on node to limit its bandwidth")
-
 parser_smart.add_argument('--removelimits', action='store_true', help="Removing all bandwidth limits on nodes")
 
-parser_smart.add_argument('--test_topology', action='store_true', help="Check if current topology give desired results")
+
+#####################################################################
+####################### End Smart Frequency #########################
+#####################################################################
 
 
 
@@ -1523,8 +1448,10 @@ if args.subparser == 'smartFreq':
     if args.removelimits:
         removeAllLimits(args.node)
 
-    if args.test_topology:
-        testTopology(args.node)
+
+#####################################################################
+####################### End Smart Frequency #########################
+#####################################################################
 
 
 
